@@ -1,13 +1,16 @@
-from flask import Flask, current_app
+from datetime import timedelta
+from flask import Flask, current_app, make_response, request, current_app
 from flask_rebar import errors, Rebar
+from functools import update_wrapper
 from marshmallow import fields, Schema
 
 from models import TypeSchema, GetTypeQueryStringSchema, GetTypesQueryStringSchema, GetTypeResponseSchema, GetTypesResponseSchema, CreateTypeSchema
 
 from db import SparqlDatasource as DB
 from db import LtpType
+import db
 
-db = DB()
+conn = DB()
 
 rebar = Rebar()
 
@@ -15,7 +18,7 @@ rebar = Rebar()
 registry = rebar.create_handler_registry(prefix='/v1')
 
 @registry.handles(
-    rule='/types',
+    rule='/types/',
     method='GET',
     query_string_schema=GetTypesQueryStringSchema(),
     marshal_schema=GetTypesResponseSchema(),
@@ -36,7 +39,7 @@ def get_types():
     else:
         parent_iri = None
 
-    (types, more) = db.get_types(max_results, offset, parent_iri)
+    (types, more) = conn.get_types(max_results, offset, parent_iri)
     current_app.logger.debug(types)
     return { 'data': types, 'more': more, 'results': len(types) }
 
@@ -54,18 +57,20 @@ def get_type(name):
     Get a list of types from the DB
     """
     args = rebar.validated_args
+    
 
     iri = current_app.config['PREFIX'] + name
 
-    t = db.get_type(iri)
-    properties = db.get_properties(t.iri, args.get('all_properties', False))
+    t = conn.get_type(iri)
 
-    if t:
-        return { 'metadata': t,
-                 'properties': properties,
-                 'num_properties': len(properties) }
-    else:
+    if not t:
         raise errors.NotFound()
+
+    properties = conn.get_properties(t.iri, args.get('all_properties', False))
+
+    return { 'metadata': t,
+             'properties': properties,
+             'num_properties': len(properties) }
 
     # Errors are converted to appropriate HTTP errors
     # raise errors.Forbidden()
@@ -80,16 +85,24 @@ def get_type(name):
 )
 def create_type():
     body = rebar.validated_body
-    t = LtpType(name = body['name'], description = body['description'])
-    db.create_type(t)
+    t = LtpType(**body)
+    t.iri = conn.generate_item_name(t.name, t.description)
+    conn.create_type(t)
     # Generate URI from prefix
     return t, 201
 
-def create_app():
-    app = Flask(__name__)
-    app.config['PREFIX'] = 'schema:'
-    rebar.init_app(app)
-    return app
+#create_app().run()
+app = Flask(__name__)
+app.config['PREFIX'] = 'schema:'
+rebar.init_app(app)
 
 if __name__ == '__main__':
-    create_app().run()
+    app.run()
+
+@app.after_request
+def apply_caching(response):
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    #import pdb; pdb.set_trace()
+    return response
+
