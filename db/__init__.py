@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 import json
 import requests
 from requests.auth import HTTPBasicAuth
@@ -157,6 +158,62 @@ class SparqlDatasource():
         results = sparqlResultToProperties(json.loads(response.text)) 
         response.raise_for_status()
         return results
+
+    def generate_item_name(self, name, description):
+        """
+        Generate a unique name to use for a resource
+        """
+
+        # Resources 
+        name = name.title()
+        if description:
+            desc_block = f'ltp:{name} rdfs:comment "{description}"'
+        else:
+            desc_block = ''
+
+        # Reserve the name with a triple, e.g.
+        # ltp:Goal <reservation> {timestamp}
+        # ltp:Goal2 <reservation> {timestamp}
+        suffixes = [''] + [ str(n) for n in range(99) ]
+
+        my_ns = 'http://shawnlower.net/o/'
+
+        timestamp = datetime.now().strftime('%s')
+        # A filter criteria ensures that the insert only
+        # occurs if the subject does not already exist.
+        # This will always succeed, with no response.
+        # A subsequent query must be done to ensure that the
+        # triples were inserted.
+        query = f"""
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX schema: <http://schema.org/>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX owl: <http://www.w3.org/2002/07/owl#>
+        PREFIX ltp: <{my_ns}>
+
+        INSERT {{
+            ltp:{name}      rdf:type rdfs:Class .
+            ltp:{name}      <http://example.com/created> "{timestamp}" .
+            ltp:{name}      rdfs:label "{name}" .
+            {desc_block if desc_block else ''}
+        }} WHERE {{
+            FILTER(NOT EXISTS {{ ltp:{name} ?p ?o }}) .
+        }}
+        """
+        print(query)
+
+        response = requests.post(self.config['endpoint'], data={'update': query})
+        response.raise_for_status()
+
+        query = f"""
+        PREFIX ltp: <{my_ns}>
+
+        ASK {{ ltp:{name} <http://example.com/created> "{timestamp}" }}
+        """
+        response = requests.post(self.config['endpoint'], data={'query': query})
+        response.raise_for_status()
+        assert(response.json()['boolean'])
+
 
 def sparqlResultToTypes(result_dict):
     """
