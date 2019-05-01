@@ -209,8 +209,9 @@ class SparqlDatasource():
               BIND( ltp:{id} as ?iri)
                 ?iri ?property ?value .
                 OPTIONAL {{ ?property rdfs:comment ?description }}
+                OPTIONAL {{ ?property rdfs:label ?prop_label }}
                 OPTIONAL {{ ?value rdf:type ?dataType }}
-                BIND(COALESCE(rdfs:label, ?property) as ?name)
+                BIND(COALESCE(?prop_label, ?property) as ?name)
             }}
             ORDER BY ?property
         """
@@ -224,6 +225,7 @@ class SparqlDatasource():
             p = LtpProperty(
                     name=binding['name']['value'],
                     iri=binding['property']['value'],
+                    description=binding['description']['value'],
                     value=binding['value']['value'])
             properties.append(p)
         return properties
