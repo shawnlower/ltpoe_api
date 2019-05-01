@@ -4,7 +4,11 @@ from flask_rebar import errors, Rebar
 from functools import update_wrapper
 from marshmallow import fields, Schema
 
+# Type models
 from models import TypeSchema, GetTypeQueryStringSchema, GetTypesQueryStringSchema, GetTypeResponseSchema, GetTypesResponseSchema, CreateTypeSchema
+
+# Item models
+from models import ItemSchema, GetItemQueryStringSchema, GetItemResponseSchema
 
 from db import SparqlDatasource as DB
 from db import LtpType
@@ -66,7 +70,7 @@ def get_type(name):
     if not t:
         raise errors.NotFound()
 
-    properties = conn.get_properties(t.iri, args.get('all_properties', False))
+    properties = conn.get_type_properties(t.iri, args.get('all_properties', False))
 
     return { 'metadata': t,
              'properties': properties,
@@ -91,6 +95,44 @@ def create_type():
     # Generate URI from prefix
     return t, 201
 
+@registry.handles(
+    rule='/types',
+    method='POST',
+    request_body_schema=CreateTypeSchema(),
+    marshal_schema={
+       201: TypeSchema()
+   }
+)
+def create_item():
+    iri = conn.generate_item_name(t.name, t.description)
+    pass
+
+@registry.handles(
+        rule='/items/<id>',
+        method='GET',
+        marshal_schema=GetItemResponseSchema(),
+)
+def get_item(id):
+    """
+    Get a single Item from the DB
+    """
+    #args = rebar.validated_args
+
+    item = conn.get_item(id)
+
+    if not item:
+        raise errors.NotFound()
+
+    properties = conn.get_item_properties(item)
+
+    return { 'metadata': item,
+             'properties': properties,
+             'num_properties': len(properties) }
+
+    # Errors are converted to appropriate HTTP errors
+    # raise errors.Forbidden()
+
+
 #create_app().run()
 app = Flask(__name__)
 app.config['PREFIX'] = 'schema:'
@@ -103,6 +145,5 @@ if __name__ == '__main__':
 def apply_caching(response):
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
     response.headers["Access-Control-Allow-Origin"] = "*"
-    #import pdb; pdb.set_trace()
     return response
 

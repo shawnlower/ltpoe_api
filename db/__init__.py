@@ -1,6 +1,6 @@
-from dataclasses import dataclass
 from datetime import datetime
 import json
+from rdflib import Graph
 import requests
 from requests.auth import HTTPBasicAuth
 
@@ -11,26 +11,64 @@ DEFAULT_CONFIG = {
 }
 
 
-@dataclass
+class LtpItem():
+    '''Class for a single "Item" object'''
+    name: str
+    dataType: str
+    id: str = ""
+    description: str = ""
+    properties = []
+    def __init__(self, name, dataType, id, description=None):
+        self.name = name
+        self.id = id
+        self.description = description
+
 class LtpType():
     '''Class for a single "Type" object'''
     name: str
     iri: str = ""
     description: str = ""
+    def __init__(self, name, iri, description):
+        self.name = name
+        self.iri = iri
+        self.description = description
 
-@dataclass
 class LtpProperty():
     '''Class for a single "Property" object'''
     name: str
     iri: str = ""
-    description: str = ""
+    value: str = ""
     datatype: str = ""
-
+    def __init__(self, name, iri, value=None, description=None, datatype=None):
+        self.name = name
+        self.iri = iri
+        self.value = value
+        self.description = description
+        self.dataType = description
 
 class SparqlDatasource():
     def __init__(self, config = DEFAULT_CONFIG):
         self.config = config
+        self.g = Graph('SPARQLStore')
+        self.g.open(config['endpoint'])
         print("Initialized SPARQL backend.")
+
+    def create_item(self, name):
+        pass
+
+    def get_items(self, max_results=25, offset=0, filters=[]):
+        """
+        Return a list of items
+
+        @param max_results: The maximum number of results to return.
+        @type max_results: int
+        @param offset: For pagination, the start of the results
+        @type offset: int
+        @param filters: A list of Filter items to apply
+        @type filters: [Filter]
+        """
+        # for item in self.g.triples
+
 
     def create_type(self, ltp_type):
         query = f"""
@@ -117,7 +155,81 @@ class SparqlDatasource():
         result = sparqlResultToTypeDetail(json.loads(response.text))
         return result
 
-    def get_properties(self, type_iri, all_properties=True):
+    def get_item(self, id: str):
+        """
+        Return a single item definition.
+        """
+        query = f"""
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX schema: <http://schema.org/>
+            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX ltp: <http://shawnlower.net/o/>
+
+            SELECT DISTINCT ?iri ?name ?description ?dataType
+            WHERE {{
+                BIND(ltp:{id} as ?iri) .
+
+               ?iri rdfs:label ?name .
+               ?iri rdfs:comment ?description .
+               ?iri rdf:type ?dataType .
+            }}
+            ORDER BY ?type
+        """
+        response = requests.post(self.config['endpoint'] + '/query', data={'query': query})
+        bindings = json.loads(response.text)['results']['bindings']
+        if not bindings:
+            return None
+        if len(bindings) > 1:
+            logger.warn("Received {} bindings. Expected a single item".format(
+                len(bindings)))
+        binding=bindings[0]
+
+        item = LtpItem(
+            id=id,
+            name=binding['name']['value'],
+            description=binding['description']['value'],
+            dataType=binding['dataType']['value'])
+
+        return item
+
+    def get_item_properties(self, item: LtpItem):
+        """
+        Return all properties for a given item
+        """
+        
+        id = item.id
+        query = f"""
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX schema: <http://schema.org/>
+            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX ltp: <http://shawnlower.net/o/>
+
+            SELECT DISTINCT ?iri ?property ?name ?description ?value
+            WHERE {{
+              BIND( ltp:{id} as ?iri)
+                ?iri ?property ?value .
+                OPTIONAL {{ ?property rdfs:comment ?description }}
+                OPTIONAL {{ ?value rdf:type ?dataType }}
+                BIND(COALESCE(rdfs:label, ?property) as ?name)
+            }}
+            ORDER BY ?property
+        """
+        response = requests.post(self.config['endpoint'] + '/query', data={'query': query})
+        response.raise_for_status()
+
+        #results = sparqlResultToProperties(json.loads(response.text)) 
+        bindings = json.loads(response.text)['results']['bindings']
+        properties = []
+        for binding in bindings:
+            p = LtpProperty(
+                    name=binding['name']['value'],
+                    iri=binding['property']['value'],
+                    value=binding['value']['value'])
+            properties.append(p)
+        return properties
+        
+
+    def get_type_properties(self, type_iri, all_properties=True):
         """
         Return all properties for a given type
         @param all_properties: Return properties for subclasses as well
