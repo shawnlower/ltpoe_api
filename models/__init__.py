@@ -47,7 +47,7 @@ class GetTypeResponseSchema(Schema):
 
 class GetItemResponseSchema(Schema):
     metadata = fields.Nested(ItemSchema)
-    properties = fields.Nested(PropertySchema, many=True)
+    properties = fields.Nested(PropertyValueSchema, many=True)
     num_properties = fields.Integer()
 
 class GetPropertiesResponseSchema(Schema):

@@ -14,13 +14,14 @@ DEFAULT_CONFIG = {
 class LtpItem():
     '''Class for a single "Item" object'''
     name: str
-    datatype: str
+    itemType: str
     id: str = ""
     description: str = ""
     properties = []
-    def __init__(self, name, datatype, id, description=None):
+    def __init__(self, name, itemType, id, description=None):
         self.name = name
         self.id = id
+        self.itemType = itemType
         self.description = description
 
 class LtpType():
@@ -218,13 +219,13 @@ class SparqlDatasource():
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX ltp: <http://shawnlower.net/o/>
 
-            SELECT DISTINCT ?iri ?name ?description ?datatype
+            SELECT DISTINCT ?iri ?name ?description ?itemType
             WHERE {{
                 BIND(ltp:{id} as ?iri) .
 
                ?iri rdfs:label ?name .
                ?iri rdfs:comment ?description .
-               ?iri rdf:type ?datatype .
+               ?iri rdf:type ?itemType .
             }}
             ORDER BY ?type
         """
@@ -241,7 +242,7 @@ class SparqlDatasource():
             id=id,
             name=binding['name']['value'],
             description=binding['description']['value'],
-            datatype=binding['datatype']['value'])
+            itemType=binding['itemType']['value'])
 
         return item
 
@@ -257,13 +258,14 @@ class SparqlDatasource():
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX ltp: <http://shawnlower.net/o/>
 
-            SELECT DISTINCT ?iri ?property ?name ?description ?value
+            SELECT DISTINCT ?iri ?property ?name ?description ?value ?datatype
             WHERE {{
               BIND( ltp:{id} as ?iri)
                 ?iri ?property ?value .
                 OPTIONAL {{ ?property rdfs:comment ?description }}
                 OPTIONAL {{ ?property rdfs:label ?prop_label }}
-                OPTIONAL {{ ?value rdf:type ?datatype }}
+                OPTIONAL {{ ?value rdf:type ?_datatype }}
+                BIND(COALESCE(?_datatype, "") as ?datatype)
                 BIND(COALESCE(?prop_label, ?property) as ?name)
             }}
             ORDER BY ?property
@@ -278,6 +280,7 @@ class SparqlDatasource():
             p = LtpProperty(
                     name=binding['name']['value'],
                     iri=binding['property']['value'],
+                    datatype=binding['datatype']['value'],
                     description=binding['description']['value'],
                     value=binding['value']['value'])
             properties.append(p)
