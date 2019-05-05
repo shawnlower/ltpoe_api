@@ -29,7 +29,7 @@ class PropertySchema(Schema):
 
 class CreateItemSchema(Schema):
     name = fields.String()
-    description = fields.String(required=False)
+    itemType = fields.String()
 
 class CreateTypeSchema(Schema):
     name = fields.String()
@@ -38,6 +38,9 @@ class CreateTypeSchema(Schema):
 ##############################################################################
 # Outgoing response schemas
 ##############################################################################
+
+class CreateItemResponseSchema(Schema):
+    item = fields.Nested(ItemSchema)
 
 class GetTypesResponseSchema(Schema):
     data = fields.Nested(TypeSchema, many=True)

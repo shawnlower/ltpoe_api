@@ -3,6 +3,7 @@ import json
 from rdflib import Graph
 import requests
 from requests.auth import HTTPBasicAuth
+import string
 
 DEFAULT_CONFIG = {
     'endpoint': 'http://localhost:3030/schema',
@@ -16,13 +17,13 @@ class LtpItem():
     name: str
     itemType: str
     id: str = ""
-    description: str = ""
+    created: str = ""
     properties = []
-    def __init__(self, name, itemType, id, description=None):
+    def __init__(self, name, itemType, id=None, created=None):
         self.name = name
         self.id = id
         self.itemType = itemType
-        self.description = description
+        self.created = created
 
 class LtpType():
     '''Class for a single "Type" object'''
@@ -57,8 +58,48 @@ class SparqlDatasource():
         self.g.open(config['endpoint'])
         print("Initialized SPARQL backend.")
 
-    def create_item(self, name):
-        pass
+    def create_item(self, name, itemType):
+
+        id = normalize_item_id(name)
+        itemType = normalize_iri(itemType)
+
+        timestamp = datetime.now().strftime('%s')
+
+        suffix = ''
+        for suffix in [''] + [str(n) for n in range(9)]:
+            iri = normalize_iri(f'http://shawnlower.net/o/{id}{suffix}')
+
+            query = f"""
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                PREFIX schema: <http://schema.org/>
+                PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                PREFIX ltp: <http://shawnlower.net/o/>
+
+                INSERT {{
+                   {iri} rdf:type      {itemType} .
+                   {iri} rdfs:label    "{name}" .
+                   {iri} ltp:created   "{timestamp}"
+                }} WHERE {{
+                   OPTIONAL {{ {iri} ?p [] }} .
+                   BIND(COALESCE(?p, "missing") as ?flag)
+                   FILTER(?flag = "missing")
+                }}
+                """
+
+            print(f'create_item: Query: {query}')
+            auth=HTTPBasicAuth(self.config['username'], self.config['password'])
+
+            response = requests.post(self.config['endpoint'] + '/update', data={'update': query}, auth=auth)
+            response.raise_for_status()
+
+            i_check = self.get_item(id + suffix)
+            if not i_check:
+                raise(Exception("Unable to create item"))
+
+            if i_check.created == timestamp:
+                return i_check
+        raise(Exception("Unable to create item"))
 
     def get_items(self, max_results=25, offset=0, filters=[]):
         """
@@ -86,7 +127,8 @@ class SparqlDatasource():
             raise(Exception('Unexpected IRI'))
 
         timestamp = datetime.now().strftime('%s')
-        name = t.name.title()
+        name = normalize_type_id(t.name)
+
         suffix = ''
         for suffix in [''] + [str(n) for n in range(9)]:
             t.iri = f'http://shawnlower.net/o/{name}{suffix}'
@@ -226,6 +268,9 @@ class SparqlDatasource():
         """
         Return a single type definition.
         """
+
+        iri = normalize_iri(type_iri)
+
         query = f"""
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX schema: <http://schema.org/>
@@ -234,11 +279,12 @@ class SparqlDatasource():
 
             SELECT DISTINCT ?iri ?name ?description ?created
             WHERE {{
-                BIND(<{type_iri}> as ?iri) .
+                BIND({iri} as ?iri) .
 
                ?iri rdfs:label ?name .
                ?iri rdfs:comment ?description .
-               ?iri ltp:created ?created .
+               OPTIONAL {{ ?iri ltp:created ?_created }} .
+               BIND(COALESCE(?_created, "") as ?created) .
             }}
             ORDER BY ?type
         """
@@ -256,13 +302,13 @@ class SparqlDatasource():
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX ltp: <http://shawnlower.net/o/>
 
-            SELECT DISTINCT ?iri ?name ?description ?itemType
+            SELECT DISTINCT ?iri ?name ?itemType ?created
             WHERE {{
                 BIND(ltp:{id} as ?iri) .
 
                ?iri rdfs:label ?name .
-               ?iri rdfs:comment ?description .
                ?iri rdf:type ?itemType .
+               ?iri ltp:created ?created .
             }}
             ORDER BY ?type
         """
@@ -278,7 +324,7 @@ class SparqlDatasource():
         item = LtpItem(
             id=id,
             name=binding['name']['value'],
-            description=binding['description']['value'],
+            created=binding['created']['value'],
             itemType=binding['itemType']['value'])
 
         return item
@@ -299,10 +345,11 @@ class SparqlDatasource():
             WHERE {{
               BIND( ltp:{id} as ?iri)
                 ?iri ?property ?value .
-                OPTIONAL {{ ?property rdfs:comment ?description }}
+                OPTIONAL {{ ?property rdfs:comment ?_description }}
                 OPTIONAL {{ ?property rdfs:label ?prop_label }}
                 OPTIONAL {{ ?value rdf:type ?_datatype }}
                 BIND(COALESCE(?_datatype, "") as ?datatype)
+                BIND(COALESCE(?_description, "") as ?description)
                 BIND(COALESCE(?prop_label, ?property) as ?name)
             }}
             ORDER BY ?property
@@ -456,5 +503,21 @@ def sparqlResultToTypeDetail(result_dict):
         t = LtpType(iri=binding['iri']['value'],
                     name=binding['name']['value'],
                     description=binding['description']['value'],
-                    created=binding['created']['value'])
+                    created=getattr(binding['created'], 'value', ''))
     return t
+
+def normalize_iri(iri: str):
+    if iri.startswith('http:') or iri.startswith('https:'):
+        return f'<{iri}>'
+    else:
+        return iri
+
+def normalize_type_id(name: str):
+    name = name.title().replace(' ', '-')
+    name = ''.join([c for c in name if c in ['.'] + list(string.ascii_letters)])
+    return name
+
+def normalize_item_id(name: str):
+    name = name.lower().replace(' ', '-')
+    name = ''.join([c for c in name if c in ['.', '-'] + list(string.ascii_letters)])
+    return name
