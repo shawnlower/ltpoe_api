@@ -10,11 +10,17 @@ class TypeSchema(Schema):
     name = fields.String()
     description = fields.String()
 
-class PropertySchema(Schema):
+class PropertyValueSchema(Schema):
     iri = fields.String()
     name = fields.String()
     description = fields.String()
     value = fields.String()
+    datatype = fields.String()
+
+class PropertySchema(Schema):
+    iri = fields.String()
+    name = fields.String()
+    description = fields.String()
     datatype = fields.String()
 
 ##############################################################################
@@ -45,12 +51,22 @@ class GetTypeResponseSchema(Schema):
 
 class GetItemResponseSchema(Schema):
     metadata = fields.Nested(ItemSchema)
-    properties = fields.Nested(PropertySchema, many=True)
+    properties = fields.Nested(PropertyValueSchema, many=True)
+    num_properties = fields.Integer()
+
+class GetPropertiesResponseSchema(Schema):
+    metadata = fields.Nested(PropertySchema)
+    data = fields.Nested(PropertySchema, many=True)
     num_properties = fields.Integer()
 
 ##############################################################################
 # Query strings
 ##############################################################################
+
+class GetPropertiesQueryStringSchema(Schema):
+    typeIri = fields.String(required=True)
+    max_results = fields.Integer(required=False)
+    offset = fields.Integer(required=False)
 
 class GetTypesQueryStringSchema(Schema):
     max_results = fields.Integer(required=False)

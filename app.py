@@ -3,12 +3,16 @@ from flask import Flask, current_app, make_response, request, current_app
 from flask_rebar import errors, Rebar
 from functools import update_wrapper
 from marshmallow import fields, Schema
+from urllib.parse import unquote
 
 # Type models
 from models import TypeSchema, GetTypeQueryStringSchema, GetTypesQueryStringSchema, GetTypeResponseSchema, GetTypesResponseSchema, CreateTypeSchema, CreateItemSchema
 
 # Item models
 from models import ItemSchema, GetItemQueryStringSchema, GetItemResponseSchema
+
+# Property models
+from models import PropertySchema, PropertyValueSchema, GetPropertiesQueryStringSchema, GetPropertiesResponseSchema
 
 from db import SparqlDatasource as DB
 from db import LtpType
@@ -49,6 +53,28 @@ def get_types():
 
     # Errors are converted to appropriate HTTP errors
     # raise errors.Forbidden()
+
+@registry.handles(
+    rule='/properties/',
+    method='GET',
+    query_string_schema=GetPropertiesQueryStringSchema(),
+    marshal_schema=GetPropertiesResponseSchema(),
+)
+def get_properties():
+    """
+    Get a list of types from the DB
+    """
+    prefix = current_app.config['PREFIX']
+
+    args = rebar.validated_args
+    max_results = args.get('max_results', 25)
+    offset = args.get('offset', 0)
+
+    typeIri =  unquote(args.get('typeIri'))
+
+    (properties, more) = conn.get_properties_for_type(typeIri, max_results, offset)
+    current_app.logger.debug(properties)
+    return { 'data': properties, 'more': more, 'results': len(properties) }
 
 @registry.handles(
     rule='/types/<name>',
@@ -134,6 +160,7 @@ def get_item(id):
 #create_app().run()
 app = Flask(__name__)
 app.config['PREFIX'] = 'schema:'
+app.config['BASE'] = 'ltp:'
 rebar.init_app(app)
 
 if __name__ == '__main__':

@@ -14,13 +14,14 @@ DEFAULT_CONFIG = {
 class LtpItem():
     '''Class for a single "Item" object'''
     name: str
-    dataType: str
+    itemType: str
     id: str = ""
     description: str = ""
     properties = []
-    def __init__(self, name, dataType, id, description=None):
+    def __init__(self, name, itemType, id, description=None):
         self.name = name
         self.id = id
+        self.itemType = itemType
         self.description = description
 
 class LtpType():
@@ -47,7 +48,7 @@ class LtpProperty():
         self.iri = iri
         self.value = value
         self.description = description
-        self.dataType = description
+        self.datatype = datatype
 
 class SparqlDatasource():
     def __init__(self, config = DEFAULT_CONFIG):
@@ -148,6 +149,7 @@ class SparqlDatasource():
             ?iri rdfs:label ?name .
             ?iri rdfs:comment ?description
           }}
+          ORDER BY ASC(?name)
           LIMIT {query_limit}
           OFFSET {query_offset}
           """
@@ -167,6 +169,58 @@ class SparqlDatasource():
 
         response.raise_for_status()
         return (results, more)
+
+    def get_properties_for_type(self, typeIri, max_results=25, offset=0):
+        """
+        Retrieve the properties for a given type
+        @param typeIri: string: the IRI of a given type
+        """
+
+        if max_results < 1 or max_results > 100:
+            query_limit = 26;
+        else:
+            query_limit = max_results + 1
+
+        query_offset = offset;
+
+        query = f"""
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX schema: <http://schema.org/>
+            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX ltp: <http://shawnlower.net/o/>
+
+            SELECT DISTINCT ?property ?name ?description ?range WHERE {{
+                BIND(<{typeIri}> as ?type)
+                ?property a rdf:Property .
+                OPTIONAL {{ ?property rdfs:label ?label }} BIND(COALESCE(?label, ?property) as ?name)
+                OPTIONAL {{ ?property rdfs:comment ?description }} .
+                ?property schema:domainIncludes ?type .
+                ?property schema:rangeIncludes ?range
+            }}
+            ORDER BY ASC(?propertyName)
+            LIMIT {query_limit}
+            OFFSET {query_offset}
+            """
+        response = requests.post(self.config['endpoint'] + '/query', data={'query': query})
+        bindings = json.loads(response.text)['results']['bindings']
+        properties = []
+        for binding in bindings:
+            p = LtpProperty(
+                name=binding['name']['value'],
+                iri=binding['property']['value'],
+                description=binding['description']['value'],
+                datatype=binding['range']['value'])
+            properties.append(p)
+
+        # Query is for one more than the user requested, so we know if addt'l results exist
+        if len(properties) == query_limit:
+            more = True
+            properties.pop()
+        else:
+            more = False
+
+        response.raise_for_status()
+        return (properties, more)
 
     def get_type(self, type_iri):
         """
@@ -202,13 +256,13 @@ class SparqlDatasource():
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX ltp: <http://shawnlower.net/o/>
 
-            SELECT DISTINCT ?iri ?name ?description ?dataType
+            SELECT DISTINCT ?iri ?name ?description ?itemType
             WHERE {{
                 BIND(ltp:{id} as ?iri) .
 
                ?iri rdfs:label ?name .
                ?iri rdfs:comment ?description .
-               ?iri rdf:type ?dataType .
+               ?iri rdf:type ?itemType .
             }}
             ORDER BY ?type
         """
@@ -225,7 +279,7 @@ class SparqlDatasource():
             id=id,
             name=binding['name']['value'],
             description=binding['description']['value'],
-            dataType=binding['dataType']['value'])
+            itemType=binding['itemType']['value'])
 
         return item
 
@@ -241,13 +295,14 @@ class SparqlDatasource():
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX ltp: <http://shawnlower.net/o/>
 
-            SELECT DISTINCT ?iri ?property ?name ?description ?value
+            SELECT DISTINCT ?iri ?property ?name ?description ?value ?datatype
             WHERE {{
               BIND( ltp:{id} as ?iri)
                 ?iri ?property ?value .
                 OPTIONAL {{ ?property rdfs:comment ?description }}
                 OPTIONAL {{ ?property rdfs:label ?prop_label }}
-                OPTIONAL {{ ?value rdf:type ?dataType }}
+                OPTIONAL {{ ?value rdf:type ?_datatype }}
+                BIND(COALESCE(?_datatype, "") as ?datatype)
                 BIND(COALESCE(?prop_label, ?property) as ?name)
             }}
             ORDER BY ?property
@@ -262,6 +317,7 @@ class SparqlDatasource():
             p = LtpProperty(
                     name=binding['name']['value'],
                     iri=binding['property']['value'],
+                    datatype=binding['datatype']['value'],
                     description=binding['description']['value'],
                     value=binding['value']['value'])
             properties.append(p)
@@ -280,7 +336,7 @@ class SparqlDatasource():
                 ?type rdfs:subClassOf* ?subtype .
                 {{ ?property rdfs:domainIncludes ?subtype }} UNION
                 {{ ?property schema:domainIncludes ?subtype }}
-                   ?property schema:rangeIncludes ?dataType
+                   ?property schema:rangeIncludes ?datatype
               }}
               FILTER (BOUND(?subtype))
         """
@@ -290,13 +346,13 @@ class SparqlDatasource():
             PREFIX schema: <http://schema.org/>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-            SELECT DISTINCT ?subtype ?property ?name ?description ?dataType
+            SELECT DISTINCT ?subtype ?property ?name ?description ?datatype
             WHERE {{
               BIND( <{type_iri}> as ?type)
               {{
                 {{ ?property rdfs:domainIncludes ?type }} UNION
                 {{ ?property schema:domainIncludes ?type }}
-                ?property schema:rangeIncludes ?dataType .
+                ?property schema:rangeIncludes ?datatype .
               }}
               { subclass_block if all_properties else '' }
               OPTIONAL {{ ?property rdfs:label ?name }}
@@ -387,7 +443,7 @@ def sparqlResultToProperties(result_dict):
         p = LtpProperty(iri=binding['property']['value'],
                     name=binding['name']['value'],
                     description=binding['description']['value'],
-                    datatype=binding['dataType']['value'])
+                    datatype=binding['datatype']['value'])
         props.append(p)
     return props
 
