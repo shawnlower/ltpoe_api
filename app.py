@@ -6,7 +6,7 @@ from marshmallow import fields, Schema
 from urllib.parse import unquote
 
 # Type models
-from models import TypeSchema, GetTypeQueryStringSchema, GetTypesQueryStringSchema, GetTypeResponseSchema, GetTypesResponseSchema, CreateTypeSchema, CreateItemSchema
+from models import TypeSchema, GetTypeQueryStringSchema, GetTypesQueryStringSchema, GetTypeResponseSchema, GetTypesResponseSchema, CreateItemResponseSchema, CreateTypeSchema, CreateItemSchema
 
 # Item models
 from models import ItemSchema, GetItemQueryStringSchema, GetItemResponseSchema
@@ -15,7 +15,7 @@ from models import ItemSchema, GetItemQueryStringSchema, GetItemResponseSchema
 from models import PropertySchema, PropertyValueSchema, GetPropertiesQueryStringSchema, GetPropertiesResponseSchema
 
 from db import SparqlDatasource as DB
-from db import LtpType
+from db import LtpType, LtpItem
 import db
 
 conn = DB()
@@ -23,7 +23,7 @@ conn = DB()
 rebar = Rebar()
 
 # All handler URL rules will be prefixed by '/v1'
-registry = rebar.create_handler_registry(prefix='/v1')
+registry = rebar.create_handler_registry(prefix='/api/v1')
 
 @registry.handles(
     rule='/types/',
@@ -87,10 +87,10 @@ def get_type(name):
     Get a list of types from the DB
     """
     args = rebar.validated_args
-    
 
     iri = current_app.config['PREFIX'] + name
 
+    current_app.logger.debug(f'Getting type for iri: {iri}')
     t = conn.get_type(iri)
 
     if not t:
@@ -125,11 +125,17 @@ def create_type():
     method='POST',
     request_body_schema=CreateItemSchema(),
     marshal_schema={
-       201: ItemSchema()
+       201: CreateItemResponseSchema()
    }
 )
 def create_item():
-    iri = conn.generate_item_name(t.name, t.description)
+    body = rebar.validated_body
+
+    i = LtpItem(**body)
+    item = conn.create_item(i.name, i.itemType)
+    # Generate URI from prefix
+    return {'item': item}, 201
+
 
 @registry.handles(
         rule='/items/<id>',
