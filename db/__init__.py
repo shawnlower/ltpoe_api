@@ -5,7 +5,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 DEFAULT_CONFIG = {
-    'endpoint': 'http://localhost:3030/test',
+    'endpoint': 'http://localhost:3030/schema',
     'username': 'admin',
     'password': 'voiafa8s9dasdf23'
 }
@@ -28,10 +28,13 @@ class LtpType():
     name: str
     iri: str = ""
     description: str = ""
-    def __init__(self, name, iri, description):
+    created: str = ""
+    properties = []
+    def __init__(self, name, description, created="", iri=None):
         self.name = name
-        self.iri = iri
         self.description = description
+        self.iri = iri
+        self.created = created
 
 class LtpProperty():
     '''Class for a single "Property" object'''
@@ -71,23 +74,51 @@ class SparqlDatasource():
 
 
     def create_type(self, ltp_type):
-        query = f"""
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        PREFIX schema: <http://schema.org/>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-        PREFIX owl: <http://www.w3.org/2002/07/owl#>
-
-        INSERT {{
-            <{ltp_type.iri}> rdf:type rdfs:Class .
-            <{ltp_type.iri}> rdfs:label "{ltp_type.name}" .
-            <{ltp_type.iri}> rdfs:comment "{ltp_type.description}"
-        }} WHERE {{}}
+        """
+        create a new Type
+        @param ltp_type: an LtpType object
         """
 
-        auth=HTTPBasicAuth(self.config['username'], self.config['password'])
+        t = ltp_type
+        # Generate a unique name
+        if t.iri:
+            raise(Exception('Unexpected IRI'))
 
-        response = requests.post(self.config['endpoint'] + '/update', data={'update': query}, auth=auth)
-        response.raise_for_status()
+        timestamp = datetime.now().strftime('%s')
+        name = t.name.title()
+        suffix = ''
+        for suffix in [''] + [str(n) for n in range(9)]:
+            t.iri = f'http://shawnlower.net/o/{name}{suffix}'
+
+            query = f"""
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                PREFIX schema: <http://schema.org/>
+                PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                PREFIX ltp: <http://shawnlower.net/o/>
+
+                INSERT {{
+                   <{t.iri}> rdf:type      rdfs:Class .
+                   <{t.iri}> rdfs:label    "{ltp_type.name}" .
+                   <{t.iri}> rdfs:comment  "{ltp_type.description}" .
+                   <{t.iri}> ltp:created   "{timestamp}"
+                }} WHERE {{
+                   OPTIONAL {{ <{t.iri}> ?p [] }} .
+                   BIND(COALESCE(?p, "missing") as ?flag)
+                   FILTER(?flag = "missing")
+                }}
+                """
+
+            print(f'create_type: Query: {query}')
+            auth=HTTPBasicAuth(self.config['username'], self.config['password'])
+
+            response = requests.post(self.config['endpoint'] + '/update', data={'update': query}, auth=auth)
+            response.raise_for_status()
+
+            t_check = self.get_type(t.iri)
+            if t_check and t_check.created == timestamp:
+                return t
+        raise(Exception("Unable to create item"))
 
     def get_types(self, max_results=25, offset=0, parent_iri=None):
         if max_results < 1 or max_results > 100:
@@ -121,7 +152,11 @@ class SparqlDatasource():
           OFFSET {query_offset}
           """
         response = requests.post(self.config['endpoint'] + '/query', data={'query': query})
+        response.raise_for_status()
+
         results = sparqlResultToTypes(json.loads(response.text))
+        if not results:
+            return ([], False)
 
         # Query is for one more than the user requested, so we know if addt'l results exist
         if len(results) == query_limit:
@@ -141,13 +176,15 @@ class SparqlDatasource():
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX schema: <http://schema.org/>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX ltp: <http://shawnlower.net/o/>
 
-            SELECT DISTINCT ?iri ?name ?description
+            SELECT DISTINCT ?iri ?name ?description ?created
             WHERE {{
-                BIND({type_iri} as ?iri) .
+                BIND(<{type_iri}> as ?iri) .
 
                ?iri rdfs:label ?name .
-               ?iri rdfs:comment ?description
+               ?iri rdfs:comment ?description .
+               ?iri ltp:created ?created .
             }}
             ORDER BY ?type
         """
@@ -362,5 +399,6 @@ def sparqlResultToTypeDetail(result_dict):
     for binding in result_dict['results']['bindings']:
         t = LtpType(iri=binding['iri']['value'],
                     name=binding['name']['value'],
-                    description=binding['description']['value'])
+                    description=binding['description']['value'],
+                    created=binding['created']['value'])
     return t

@@ -5,7 +5,7 @@ from functools import update_wrapper
 from marshmallow import fields, Schema
 
 # Type models
-from models import TypeSchema, GetTypeQueryStringSchema, GetTypesQueryStringSchema, GetTypeResponseSchema, GetTypesResponseSchema, CreateTypeSchema
+from models import TypeSchema, GetTypeQueryStringSchema, GetTypesQueryStringSchema, GetTypeResponseSchema, GetTypesResponseSchema, CreateTypeSchema, CreateItemSchema
 
 # Item models
 from models import ItemSchema, GetItemQueryStringSchema, GetItemResponseSchema
@@ -90,22 +90,20 @@ def get_type(name):
 def create_type():
     body = rebar.validated_body
     t = LtpType(**body)
-    t.iri = conn.generate_item_name(t.name, t.description)
     conn.create_type(t)
     # Generate URI from prefix
     return t, 201
 
 @registry.handles(
-    rule='/types',
+    rule='/items',
     method='POST',
-    request_body_schema=CreateTypeSchema(),
+    request_body_schema=CreateItemSchema(),
     marshal_schema={
-       201: TypeSchema()
+       201: ItemSchema()
    }
 )
 def create_item():
     iri = conn.generate_item_name(t.name, t.description)
-    pass
 
 @registry.handles(
         rule='/items/<id>',

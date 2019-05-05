@@ -21,6 +21,10 @@ class PropertySchema(Schema):
 # Request schemas
 ##############################################################################
 
+class CreateItemSchema(Schema):
+    name = fields.String()
+    description = fields.String(required=False)
+
 class CreateTypeSchema(Schema):
     name = fields.String()
     description = fields.String(required=False)
