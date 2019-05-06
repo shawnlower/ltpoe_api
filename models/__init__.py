@@ -67,7 +67,6 @@ class GetPropertiesResponseSchema(Schema):
 ##############################################################################
 
 class GetPropertiesQueryStringSchema(Schema):
-    typeIri = fields.String(required=True)
     max_results = fields.Integer(required=False)
     offset = fields.Integer(required=False)
 

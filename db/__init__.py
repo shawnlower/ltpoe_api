@@ -212,7 +212,7 @@ class SparqlDatasource():
         response.raise_for_status()
         return (results, more)
 
-    def get_properties_for_type(self, typeIri, max_results=25, offset=0):
+    def get_properties(self, max_results=25, offset=0):
         """
         Retrieve the properties for a given type
         @param typeIri: string: the IRI of a given type
@@ -224,7 +224,7 @@ class SparqlDatasource():
             query_limit = max_results + 1
 
         query_offset = offset;
-
+        
         query = f"""
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX schema: <http://schema.org/>
@@ -232,7 +232,6 @@ class SparqlDatasource():
             PREFIX ltp: <http://shawnlower.net/o/>
 
             SELECT DISTINCT ?property ?name ?description ?range WHERE {{
-                BIND(<{typeIri}> as ?type)
                 ?property a rdf:Property .
                 OPTIONAL {{ ?property rdfs:label ?label }} BIND(COALESCE(?label, ?property) as ?name)
                 OPTIONAL {{ ?property rdfs:comment ?description }} .
@@ -289,6 +288,9 @@ class SparqlDatasource():
             ORDER BY ?type
         """
         response = requests.post(self.config['endpoint'] + '/query', data={'query': query})
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
         result = sparqlResultToTypeDetail(json.loads(response.text))
         return result
 
@@ -371,7 +373,7 @@ class SparqlDatasource():
         return properties
         
 
-    def get_type_properties(self, type_iri, all_properties=True):
+    def get_properties_for_type(self, type_iri, all_properties=True):
         """
         Return all properties for a given type
         @param all_properties: Return properties for subclasses as well
@@ -411,7 +413,9 @@ class SparqlDatasource():
 
         results = sparqlResultToProperties(json.loads(response.text)) 
         response.raise_for_status()
+
         return results
+
 
     def generate_item_name(self, name, description):
         """

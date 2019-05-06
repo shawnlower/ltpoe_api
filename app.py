@@ -69,10 +69,9 @@ def get_properties():
     args = rebar.validated_args
     max_results = args.get('max_results', 25)
     offset = args.get('offset', 0)
+    all_properties = args.get('all_properties')
 
-    typeIri =  unquote(args.get('typeIri'))
-
-    (properties, more) = conn.get_properties_for_type(typeIri, max_results, offset)
+    (properties, more) = conn.get_properties(max_results, offset)
     current_app.logger.debug(properties)
     return { 'data': properties, 'more': more, 'results': len(properties) }
 
@@ -96,7 +95,7 @@ def get_type(name):
     if not t:
         raise errors.NotFound()
 
-    properties = conn.get_type_properties(t.iri, args.get('all_properties', False))
+    properties = conn.get_properties_for_type(t.iri, args.get('all_properties', True))
 
     return { 'metadata': t,
              'properties': properties,
