@@ -6,9 +6,10 @@ from requests.auth import HTTPBasicAuth
 import string
 
 DEFAULT_CONFIG = {
-    'endpoint': 'http://localhost:3030/schema',
+    'endpoint': 'http://localhost:3030/ltp',
     'username': 'admin',
-    'password': 'voiafa8s9dasdf23'
+    'password': 'voiafa8s9dasdf23',
+    'prefix':   'http://shawnlower.net/o/',
 }
 
 
@@ -74,7 +75,7 @@ class SparqlDatasource():
                 PREFIX schema: <http://schema.org/>
                 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                 PREFIX owl: <http://www.w3.org/2002/07/owl#>
-                PREFIX ltp: <http://shawnlower.net/o/>
+                PREFIX ltp: <{self.config['prefix']}>
 
                 INSERT {{
                    {iri} rdf:type      {itemType} .
@@ -138,7 +139,7 @@ class SparqlDatasource():
                 PREFIX schema: <http://schema.org/>
                 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                 PREFIX owl: <http://www.w3.org/2002/07/owl#>
-                PREFIX ltp: <http://shawnlower.net/o/>
+                PREFIX ltp: <{self.config['prefix']}>
 
                 INSERT {{
                    <{t.iri}> rdf:type      rdfs:Class .
@@ -180,6 +181,7 @@ class SparqlDatasource():
           PREFIX schema: <http://schema.org/>
           PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
           PREFIX owl: <http://www.w3.org/2002/07/owl#>
+          PREFIX ltp: <{self.config['prefix']}>
 
           SELECT DISTINCT ?iri ?name ?description WHERE {{
 
@@ -229,14 +231,14 @@ class SparqlDatasource():
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX schema: <http://schema.org/>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-            PREFIX ltp: <http://shawnlower.net/o/>
+            PREFIX ltp: <{self.config['prefix']}>
 
             SELECT DISTINCT ?property ?name ?description ?range WHERE {{
                 ?property a rdf:Property .
                 OPTIONAL {{ ?property rdfs:label ?label }} BIND(COALESCE(?label, ?property) as ?name)
                 OPTIONAL {{ ?property rdfs:comment ?description }} .
-                ?property schema:domainIncludes ?type .
-                ?property schema:rangeIncludes ?range
+                ?property rdfs:domain ?type .
+                ?property rdfs:range ?range
             }}
             ORDER BY ASC(?propertyName)
             LIMIT {query_limit}
@@ -263,22 +265,21 @@ class SparqlDatasource():
         response.raise_for_status()
         return (properties, more)
 
-    def get_type(self, type_iri):
+    def get_type(self, type_id: string):
         """
         Return a single type definition.
+        @param type_id: string : the localname part of an IRI
         """
-
-        iri = normalize_iri(type_iri)
 
         query = f"""
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX schema: <http://schema.org/>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-            PREFIX ltp: <http://shawnlower.net/o/>
+            PREFIX ltp: <{self.config['prefix']}>
 
             SELECT DISTINCT ?iri ?name ?description ?created
             WHERE {{
-                BIND({iri} as ?iri) .
+                BIND(ltp:{type_id} as ?iri) .
 
                ?iri rdfs:label ?name .
                ?iri rdfs:comment ?description .
@@ -287,6 +288,7 @@ class SparqlDatasource():
             }}
             ORDER BY ?type
         """
+        print('get_type w/ query: ', query)
         response = requests.post(self.config['endpoint'] + '/query', data={'query': query})
         if response.status_code == 404:
             return None
@@ -302,7 +304,7 @@ class SparqlDatasource():
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX schema: <http://schema.org/>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-            PREFIX ltp: <http://shawnlower.net/o/>
+            PREFIX ltp: <{self.config['prefix']}>
 
             SELECT DISTINCT ?iri ?name ?itemType ?created
             WHERE {{
@@ -341,7 +343,7 @@ class SparqlDatasource():
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX schema: <http://schema.org/>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-            PREFIX ltp: <http://shawnlower.net/o/>
+            PREFIX ltp: <{self.config['prefix']}>
 
             SELECT DISTINCT ?iri ?property ?name ?description ?value ?datatype
             WHERE {{
@@ -383,12 +385,13 @@ class SparqlDatasource():
         # This gets inserted into the main query below.
         subclass_block= f""" UNION {{
                 ?type rdfs:subClassOf* ?subtype .
-                {{ ?property rdfs:domainIncludes ?subtype }} UNION
+                {{ ?property rdfs:domain ?subtype }} UNION
                 {{ ?property schema:domainIncludes ?subtype }}
                    ?property schema:rangeIncludes ?datatype
               }}
               FILTER (BOUND(?subtype))
         """
+
 
         query = f"""
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -399,16 +402,24 @@ class SparqlDatasource():
             WHERE {{
               BIND( <{type_iri}> as ?type)
               {{
-                {{ ?property rdfs:domainIncludes ?type }} UNION
-                {{ ?property schema:domainIncludes ?type }}
-                ?property schema:rangeIncludes ?datatype .
+                ?property rdfs:domain ?type .
+                ?property rdfs:range ?datatype .
               }}
-              { subclass_block if all_properties else '' }
+              UNION
+              {{
+                ?type rdfs:subClassOf* ?subtype .
+                ?property rdfs:domain ?subtype .
+                ?property rdfs:range ?datatype .
+              }}
+              FILTER (BOUND(?subtype))
+
               OPTIONAL {{ ?property rdfs:label ?name }}
-              OPTIONAL {{ ?property rdfs:comment ?description }}
+              OPTIONAL {{ ?property rdfs:comment ?_description }}
+              BIND(COALESCE(?_description, "no description") as ?description)
               }}
             ORDER BY ?type
         """
+        print('get_properties_for_type: ', query)
         response = requests.post(self.config['endpoint'] + '/query', data={'query': query})
 
         results = sparqlResultToProperties(json.loads(response.text)) 
@@ -434,8 +445,6 @@ class SparqlDatasource():
         # ltp:Goal2 <reservation> {timestamp}
         suffixes = [''] + [ str(n) for n in range(99) ]
 
-        my_ns = 'http://shawnlower.net/o/'
-
         timestamp = datetime.now().strftime('%s')
         # A filter criteria ensures that the insert only
         # occurs if the subject does not already exist.
@@ -447,7 +456,7 @@ class SparqlDatasource():
         PREFIX schema: <http://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX owl: <http://www.w3.org/2002/07/owl#>
-        PREFIX ltp: <{my_ns}>
+        PREFIX ltp: <{self.config['prefix']}>
 
         INSERT {{
             ltp:{name}      rdf:type rdfs:Class .
@@ -464,7 +473,7 @@ class SparqlDatasource():
         response.raise_for_status()
 
         query = f"""
-        PREFIX ltp: <{my_ns}>
+        PREFIX ltp: <{self.config['prefix']}>
 
         ASK {{ ltp:{name} <http://example.com/created> "{timestamp}" }}
         """
@@ -507,7 +516,7 @@ def sparqlResultToTypeDetail(result_dict):
         t = LtpType(iri=binding['iri']['value'],
                     name=binding['name']['value'],
                     description=binding['description']['value'],
-                    created=getattr(binding['created'], 'value', ''))
+                    created=binding['created'].get('value'))
     return t
 
 def normalize_iri(iri: str):

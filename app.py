@@ -87,10 +87,8 @@ def get_type(name):
     """
     args = rebar.validated_args
 
-    iri = current_app.config['PREFIX'] + name
-
-    current_app.logger.debug(f'Getting type for iri: {iri}')
-    t = conn.get_type(iri)
+    current_app.logger.debug(f'Getting type for name: {name}')
+    t = conn.get_type(name)
 
     if not t:
         raise errors.NotFound()
@@ -162,7 +160,6 @@ def get_item(id):
     # raise errors.Forbidden()
 
 
-#create_app().run()
 app = Flask(__name__)
 app.config['PREFIX'] = 'schema:'
 app.config['BASE'] = 'ltp:'
