@@ -52,6 +52,11 @@ class GetTypeResponseSchema(Schema):
     properties = fields.Nested(PropertySchema, many=True)
     num_properties = fields.Integer()
 
+class GetItemsResponseSchema(Schema):
+    data = fields.Nested(ItemSchema, many=True)
+    more = fields.Boolean()
+    results = fields.Integer()
+
 class GetItemResponseSchema(Schema):
     metadata = fields.Nested(ItemSchema)
     properties = fields.Nested(PropertyValueSchema, many=True)
@@ -67,6 +72,11 @@ class GetPropertiesResponseSchema(Schema):
 ##############################################################################
 
 class GetPropertiesQueryStringSchema(Schema):
+    max_results = fields.Integer(required=False)
+    offset = fields.Integer(required=False)
+
+class GetItemsQueryStringSchema(Schema):
+    itemTypeId = fields.String(required=True)
     max_results = fields.Integer(required=False)
     offset = fields.Integer(required=False)
 

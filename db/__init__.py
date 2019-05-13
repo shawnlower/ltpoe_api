@@ -1,6 +1,6 @@
 from datetime import datetime
 import json
-from rdflib import Graph
+from rdflib import ConjunctiveGraph, Graph, RDF, RDFS, OWL, URIRef
 import requests
 from requests.auth import HTTPBasicAuth
 import string
@@ -55,16 +55,18 @@ class LtpProperty():
 class SparqlDatasource():
     def __init__(self, config = DEFAULT_CONFIG):
         self.config = config
-        self.g = Graph('SPARQLStore')
+        self.g = ConjunctiveGraph('SPARQLStore',
+                     identifier=config['prefix'])
         self.g.open(config['endpoint'])
         print("Initialized SPARQL backend.")
 
-    def create_item(self, name, itemType):
+    def create_item(self, name, itemTypeId):
 
         id = normalize_item_id(name)
-        itemType = normalize_iri(itemType)
+        itemType = URIRef(self.config['prefix'] + itemTypeId).n3()
 
-        timestamp = datetime.now().strftime('%s')
+        timestamp = datetime.now().isoformat(sep=' ',
+                timespec='milliseconds')
 
         suffix = ''
         for suffix in [''] + [str(n) for n in range(9)]:
@@ -75,12 +77,13 @@ class SparqlDatasource():
                 PREFIX schema: <http://schema.org/>
                 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                 PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
                 PREFIX ltp: <{self.config['prefix']}>
 
                 INSERT {{
                    {iri} rdf:type      {itemType} .
                    {iri} rdfs:label    "{name}" .
-                   {iri} ltp:created   "{timestamp}"
+                   {iri} ltp:created   "{timestamp}"^^xsd:dateTime .
                 }} WHERE {{
                    OPTIONAL {{ {iri} ?p [] }} .
                    BIND(COALESCE(?p, "missing") as ?flag)
@@ -102,7 +105,7 @@ class SparqlDatasource():
                 return i_check
         raise(Exception("Unable to create item"))
 
-    def get_items(self, max_results=25, offset=0, filters=[]):
+    def get_items(self, itemTypeId: str, max_results=25, offset=0):
         """
         Return a list of items
 
@@ -110,10 +113,18 @@ class SparqlDatasource():
         @type max_results: int
         @param offset: For pagination, the start of the results
         @type offset: int
-        @param filters: A list of Filter items to apply
-        @type filters: [Filter]
+        @param itemTypeId: The local ID of the type, e.g. 'Book'
+        @type itemTypeId: str
         """
-        # for item in self.g.triples
+
+        itemType = URIRef(self.config['prefix'] + itemTypeId)
+        items = []
+        for entity in self.g.subjects(RDF.type, itemType):
+            # extract the localname / ID portion of the IRI
+            id = entity.partition(self.config['prefix'])[2]
+            items.append(self.get_item(id))
+            
+        return (items, False)
 
 
     def create_type(self, ltp_type):
@@ -445,7 +456,8 @@ class SparqlDatasource():
         # ltp:Goal2 <reservation> {timestamp}
         suffixes = [''] + [ str(n) for n in range(99) ]
 
-        timestamp = datetime.now().strftime('%s')
+        timestamp = datetime.now().isoformat(sep=' ',
+                timespec='milliseconds')
         # A filter criteria ensures that the insert only
         # occurs if the subject does not already exist.
         # This will always succeed, with no response.
@@ -460,7 +472,7 @@ class SparqlDatasource():
 
         INSERT {{
             ltp:{name}      rdf:type rdfs:Class .
-            ltp:{name}      <http://example.com/created> "{timestamp}" .
+            ltp:{name}      <http://example.com/created> "{timestamp}"^^xsd:dateTime .
             ltp:{name}      rdfs:label "{name}" .
             {desc_block if desc_block else ''}
         }} WHERE {{
