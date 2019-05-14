@@ -7,6 +7,7 @@ from urllib.parse import unquote
 
 # Type models
 from models import TypeSchema, GetTypeQueryStringSchema, GetTypesQueryStringSchema, GetTypeResponseSchema, GetTypesResponseSchema, CreateItemResponseSchema, CreateTypeSchema, CreateItemSchema
+from models import GetItemsResponseSchema, GetItemsQueryStringSchema
 
 # Item models
 from models import ItemSchema, GetItemQueryStringSchema, GetItemResponseSchema
@@ -55,6 +56,26 @@ def get_types():
     # raise errors.Forbidden()
 
 @registry.handles(
+    rule='/items/',
+    method='GET',
+    query_string_schema=GetItemsQueryStringSchema(),
+    marshal_schema=GetItemsResponseSchema(),
+)
+def get_items():
+    """
+    Get a list of types from the DB
+    """
+    
+    args = rebar.validated_args
+    max_results = args.get('max_results', 25)
+    offset = args.get('offset', 0)
+    itemTypeId = args.get('itemTypeId')
+
+    (items, more) = conn.get_items(itemTypeId)
+    current_app.logger.debug(items)
+    return { 'data': items, 'more': more, 'results': len(items) }
+
+@registry.handles(
     rule='/properties/',
     method='GET',
     query_string_schema=GetPropertiesQueryStringSchema(),
@@ -64,8 +85,6 @@ def get_properties():
     """
     Get a list of types from the DB
     """
-    prefix = current_app.config['PREFIX']
-
     args = rebar.validated_args
     max_results = args.get('max_results', 25)
     offset = args.get('offset', 0)
