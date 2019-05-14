@@ -198,6 +198,9 @@ class SparqlDatasource():
           OFFSET {query_offset}
           """
         response = requests.post(self.config['endpoint'] + '/query', data={'query': query})
+        if response.status_code == 404:
+            return ([], False)
+
         response.raise_for_status()
 
         results = sparqlResultToTypes(json.loads(response.text))
