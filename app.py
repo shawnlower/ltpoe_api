@@ -112,7 +112,7 @@ def get_type(name):
     if not t:
         raise errors.NotFound()
 
-    properties = conn.get_properties_for_type(t.iri, args.get('all_properties', True))
+    properties = conn.get_properties_for_type(t.id, args.get('all_properties', True))
 
     return { 'metadata': t,
              'properties': properties,

@@ -29,14 +29,14 @@ class LtpItem():
 class LtpType():
     '''Class for a single "Type" object'''
     name: str
-    iri: str = ""
+    id: str = ""
     description: str = ""
     created: str = ""
     properties = []
-    def __init__(self, name, description, created="", iri=None):
+    def __init__(self, name, description, created="", id=None):
         self.name = name
         self.description = description
-        self.iri = iri
+        self.id = id
         self.created = created
 
 class LtpProperty():
@@ -214,7 +214,7 @@ class SparqlDatasource():
 
         response.raise_for_status()
 
-        results = sparqlResultToTypes(json.loads(response.text))
+        results = self.sparqlResultToTypes(json.loads(response.text))
         if not results:
             return ([], False)
 
@@ -307,7 +307,7 @@ class SparqlDatasource():
         if response.status_code == 404:
             return None
         response.raise_for_status()
-        result = sparqlResultToTypeDetail(json.loads(response.text))
+        result = self.sparqlResultToTypeDetail(json.loads(response.text))
         return result
 
     def get_item(self, id: str):
@@ -389,7 +389,7 @@ class SparqlDatasource():
         return properties
         
 
-    def get_properties_for_type(self, type_iri, all_properties=True):
+    def get_properties_for_type(self, id, all_properties=True):
         """
         Return all properties for a given type
         @param all_properties: Return properties for subclasses as well
@@ -411,10 +411,11 @@ class SparqlDatasource():
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX schema: <http://schema.org/>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX ltp: <{self.config['prefix']}>
 
             SELECT DISTINCT ?subtype ?property ?name ?description ?datatype
             WHERE {{
-              BIND( <{type_iri}> as ?type)
+              BIND( ltp:{id} as ?type)
               {{
                 ?property rdfs:domain ?type .
                 ?property rdfs:range ?datatype .
@@ -497,17 +498,33 @@ class SparqlDatasource():
         assert(response.json()['boolean'])
 
 
-def sparqlResultToTypes(result_dict):
-    """
-    Take the JSON payload and return it as a list of python LtpType objects
-    """
-    ltp_types = []
-    for binding in result_dict['results']['bindings']:
-        t = LtpType(iri=binding['iri']['value'],
-                    name=binding['name']['value'],
-                    description=binding['description']['value'])
-        ltp_types.append(t)
-    return ltp_types
+    def sparqlResultToTypes(self, result_dict):
+        """
+        Take the JSON payload and return it as a list of python LtpType objects
+        """
+        ltp_types = []
+        for binding in result_dict['results']['bindings']:
+            iri=binding['iri']['value']
+            id=iri.partition(self.config['prefix'])[2]
+            t = LtpType(id=id,
+                        name=binding['name']['value'],
+                        description=binding['description']['value'])
+            ltp_types.append(t)
+        return ltp_types
+
+    def sparqlResultToTypeDetail(self, result_dict):
+        """
+        Take the JSON payload and return it as a list of python LtpType objects
+        """
+        t = None
+        for binding in result_dict['results']['bindings']:
+            iri=binding['iri']['value']
+            id=iri.partition(self.config['prefix'])[2]
+            t = LtpType(id=id,
+                        name=binding['name']['value'],
+                        description=binding['description']['value'],
+                        created=binding['created'].get('value'))
+        return t
 
 def sparqlResultToProperties(result_dict):
     """
@@ -521,18 +538,6 @@ def sparqlResultToProperties(result_dict):
                     datatype=binding['datatype']['value'])
         props.append(p)
     return props
-
-def sparqlResultToTypeDetail(result_dict):
-    """
-    Take the JSON payload and return it as a list of python LtpType objects
-    """
-    t = None
-    for binding in result_dict['results']['bindings']:
-        t = LtpType(iri=binding['iri']['value'],
-                    name=binding['name']['value'],
-                    description=binding['description']['value'],
-                    created=binding['created'].get('value'))
-    return t
 
 def normalize_iri(iri: str):
     if iri.startswith('http:') or iri.startswith('https:'):

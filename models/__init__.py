@@ -6,7 +6,7 @@ class ItemSchema(Schema):
     itemType = fields.String()
 
 class TypeSchema(Schema):
-    iri = fields.String()
+    id = fields.String()
     name = fields.String()
     description = fields.String()
 
