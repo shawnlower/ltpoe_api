@@ -42,12 +42,12 @@ class LtpType():
 class LtpProperty():
     '''Class for a single "Property" object'''
     name: str
-    iri: str = ""
+    id: str = ""
     value: str = ""
     datatype: str = ""
-    def __init__(self, name, iri, value=None, description=None, datatype=None):
+    def __init__(self, name, id, value=None, description=None, datatype=None):
         self.name = name
-        self.iri = iri
+        self.id = id
         self.value = value
         self.description = description
         self.datatype = datatype
@@ -262,11 +262,15 @@ class SparqlDatasource():
         bindings = json.loads(response.text)['results']['bindings']
         properties = []
         for binding in bindings:
+            iri=binding['iri']['value']
+            id=iri.partition(self.config['prefix'])[2]
+            datatype_iri=binding['range']['value']
+            datatype=datatype_iri.partition(self.config['prefix'])[2]
             p = LtpProperty(
                 name=binding['name']['value'],
-                iri=binding['property']['value'],
+                id=id,
                 description=binding['description']['value'],
-                datatype=binding['range']['value'])
+                datatype=datatype)
             properties.append(p)
 
         # Query is for one more than the user requested, so we know if addt'l results exist
@@ -375,14 +379,18 @@ class SparqlDatasource():
         response = requests.post(self.config['endpoint'] + '/query', data={'query': query})
         response.raise_for_status()
 
-        #results = sparqlResultToProperties(json.loads(response.text)) 
         bindings = json.loads(response.text)['results']['bindings']
         properties = []
         for binding in bindings:
+            property_iri=binding['property']['value']
+            property=property_iri.partition(self.config['prefix'])[2]
+
+            datatype_iri=binding['datatype']['value']
+            datatype=datatype_iri.partition(self.config['prefix'])[2]
             p = LtpProperty(
                     name=binding['name']['value'],
-                    iri=binding['property']['value'],
-                    datatype=binding['datatype']['value'],
+                    id=property,
+                    datatype=datatype,
                     description=binding['description']['value'],
                     value=binding['value']['value'])
             properties.append(p)
@@ -437,7 +445,7 @@ class SparqlDatasource():
         print('get_properties_for_type: ', query)
         response = requests.post(self.config['endpoint'] + '/query', data={'query': query})
 
-        results = sparqlResultToProperties(json.loads(response.text)) 
+        results = self.sparqlResultToProperties(json.loads(response.text)) 
         response.raise_for_status()
 
         return results
@@ -526,18 +534,28 @@ class SparqlDatasource():
                         created=binding['created'].get('value'))
         return t
 
-def sparqlResultToProperties(result_dict):
-    """
-    Take the JSON payload and return it as a list of python LtpType objects
-    """
-    props = []
-    for binding in result_dict['results']['bindings']:
-        p = LtpProperty(iri=binding['property']['value'],
-                    name=binding['name']['value'],
-                    description=binding['description']['value'],
-                    datatype=binding['datatype']['value'])
-        props.append(p)
-    return props
+    def sparqlResultToProperties(self, result_dict):
+        """
+        Take the JSON payload and return it as a list of python LtpType objects
+        """
+        props = []
+        prefix = self.config['prefix']
+        for binding in result_dict['results']['bindings']:
+            iri=binding['property']['value']
+            id=iri.partition(self.config['prefix'])[2]
+
+            datatype_iri=binding['datatype']['value']
+            if datatype_iri.startswith(prefix):
+                datatype=datatype_iri.partition(prefix)[2]
+            else:
+                datatype=datatype_iri
+
+            p = LtpProperty(id=id,
+                        name=binding['name']['value'],
+                        description=binding['description']['value'],
+                        datatype=datatype)
+            props.append(p)
+        return props
 
 def normalize_iri(iri: str):
     if iri.startswith('http:') or iri.startswith('https:'):
@@ -548,9 +566,11 @@ def normalize_iri(iri: str):
 def normalize_type_id(name: str):
     name = name.title().replace(' ', '-')
     name = ''.join([c for c in name if c in ['.'] + list(string.ascii_letters)])
+    name=name.lstrip('.').rstrip('.')
     return name
 
 def normalize_item_id(name: str):
     name = name.lower().replace(' ', '-')
     name = ''.join([c for c in name if c in ['.', '-'] + list(string.ascii_letters)])
+    name=name.lstrip('.').rstrip('.')
     return name

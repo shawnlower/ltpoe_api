@@ -11,14 +11,14 @@ class TypeSchema(Schema):
     description = fields.String()
 
 class PropertyValueSchema(Schema):
-    iri = fields.String()
+    id = fields.String()
     name = fields.String()
     description = fields.String()
     value = fields.String()
     datatype = fields.String()
 
 class PropertySchema(Schema):
-    iri = fields.String()
+    id = fields.String()
     name = fields.String()
     description = fields.String()
     datatype = fields.String()
