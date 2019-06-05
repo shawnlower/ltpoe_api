@@ -23,6 +23,12 @@ class PropertySchema(Schema):
     description = fields.String()
     datatype = fields.String()
 
+class CreatePropertySchema(Schema):
+    name = fields.String(required=True)
+    description = fields.String(required=True)
+    itemtypes = fields.List(fields.String, required=True)
+    datatypes = fields.List(fields.String, required=True)
+
 ##############################################################################
 # Request schemas
 ##############################################################################

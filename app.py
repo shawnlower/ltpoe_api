@@ -1,6 +1,6 @@
 from datetime import timedelta
 from flask import Flask, current_app, make_response, request, current_app
-from flask_rebar import errors, Rebar
+from flask_rebar import Rebar
 from functools import update_wrapper
 from marshmallow import fields, Schema
 from urllib.parse import unquote
@@ -12,11 +12,13 @@ from models import GetItemsResponseSchema, GetItemsQueryStringSchema
 # Item models
 from models import ItemSchema, GetItemQueryStringSchema, GetItemResponseSchema
 
+import exceptions as err
+
 # Property models
-from models import PropertySchema, PropertyValueSchema, GetPropertiesQueryStringSchema, GetPropertiesResponseSchema
+from models import CreatePropertySchema, PropertySchema, PropertyValueSchema, GetPropertiesQueryStringSchema, GetPropertiesResponseSchema
 
 from db import SparqlDatasource as DB
-from db import LtpType, LtpItem
+from db import LtpType, LtpItem, LtpProperty
 import db
 
 conn = DB()
@@ -110,7 +112,7 @@ def get_type(name):
     t = conn.get_type(name)
 
     if not t:
-        raise errors.NotFound()
+        raise err.NotFound()
 
     properties = conn.get_properties_for_type(t.id, args.get('all_properties', True))
 
@@ -135,6 +137,29 @@ def create_type():
     conn.create_type(t)
     # Generate URI from prefix
     return t, 201
+
+@registry.handles(
+    rule='/properties',
+    method='POST',
+    request_body_schema=CreatePropertySchema(),
+    marshal_schema={
+       201: PropertySchema()
+   }
+)
+def create_property():
+    body = rebar.validated_body
+    p = LtpProperty(**body)
+    try:
+        conn.create_property(p)
+    except err.InvalidProperty as e:
+        raise err.BadRequest(e.msg)
+    except Exception as e:
+        raise err.BadRequest(str(e))
+
+    raise err.NotImplemented('rats')
+
+    # Generate URI from prefix
+    return p, 201
 
 @registry.handles(
     rule='/items',
@@ -167,7 +192,7 @@ def get_item(id):
     item = conn.get_item(id)
 
     if not item:
-        raise errors.NotFound()
+        raise err.NotFound()
 
     properties = conn.get_item_properties(item)
 

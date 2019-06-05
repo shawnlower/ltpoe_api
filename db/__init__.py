@@ -5,6 +5,9 @@ import requests
 from requests.auth import HTTPBasicAuth
 import string
 
+import util
+import exceptions as err
+
 DEFAULT_CONFIG = {
     'endpoint': 'http://localhost:3030/ltp',
     'username': 'admin',
@@ -45,12 +48,27 @@ class LtpProperty():
     id: str = ""
     value: str = ""
     datatype: str = ""
-    def __init__(self, name, id, value=None, description=None, datatype=None):
+    def __init__(self, name, id=None, value=None, description=None, datatype=None):
         self.name = name
         self.id = id
         self.value = value
         self.description = description
         self.datatype = datatype
+
+    def validate(self):
+        """Ensure the property is complete and consistent.
+
+        Specifically:
+        - Required fields: name, description
+        - Datatype specifies a valid type
+        - id exists
+        """
+        required = ['name', 'description']
+        missing  = [k for k in required if not getattr(self, k)]
+        if missing:
+            raise err.InvalidProperty('Missing keys {}'.format(str(missing)))
+
+        raise err.NotImplemented
 
 class SparqlDatasource():
     def __init__(self, config = DEFAULT_CONFIG):
@@ -59,6 +77,11 @@ class SparqlDatasource():
                      identifier=config['prefix'])
         self.g.open(config['endpoint'])
         print("Initialized SPARQL backend.")
+
+    def create_property(self, prop):
+        if not prop.validate():
+            raise err.InvalidProperty
+
 
     def create_item(self, name, itemTypeId):
 
