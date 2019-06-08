@@ -1,5 +1,5 @@
 dev:
-	FLASK_ENV=development flask run
+	FLASK_APP=ltpapi FLASK_ENV=development flask run
 
 test:
 	python -m pytest
