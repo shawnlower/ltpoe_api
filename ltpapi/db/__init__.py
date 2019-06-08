@@ -140,9 +140,17 @@ class SparqlDatasource():
         @type itemTypeId: str
         """
 
-        itemType = URIRef(self.config['prefix'] + itemTypeId)
+        if itemTypeId:
+            item_type = URIRef(self.config['prefix'] + itemTypeId)
+            subjects = self.g.subjects(RDF.type, item_type)
+        else:
+            all_types = self.g.transitive_subjects(RDFS.subClassOf, OWL['Thing'])
+            subjects = []
+            for item_type in all_types:
+                subjects += self.g.subjects(RDF.type, item_type)
+
         items = []
-        for entity in self.g.subjects(RDF.type, itemType):
+        for entity in subjects:
             # extract the localname / ID portion of the IRI
             id = entity.partition(self.config['prefix'])[2]
             items.append(self.get_item(id))
