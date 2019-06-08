@@ -173,10 +173,12 @@ def create_item():
     body = rebar.validated_body
 
     i = LtpItem(**body)
-    item = conn.create_item(i.name, i.itemType)
-    # Generate URI from prefix
-    return {'item': item}, 201
+    try:
+        item = conn.create_item(i.name, i.itemType)
+    except Exception as e:
+        raise err.InternalError()
 
+    return {'item': item}, 201
 
 @registry.handles(
         rule='/items/<id>',
