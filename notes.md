@@ -1,9 +1,9 @@
 Acquire:
-    - JPEG
-    - MP3
-    - Doc
-    - HTML
-    - Text
+- JPEG
+- MP3
+- Doc
+- HTML
+- Text
 
 
 - Extract metadata
@@ -19,6 +19,7 @@ Acquire:
 
 # Starting from new photo of manhattan bridge
 # observation
+```
 {   date: 2019-05-24,
     agent: time-stitch/0.1,
     items:
@@ -38,5 +39,5 @@ Acquire:
                 }
             }
         ]
-
+```
 Serialized to RDF as:
