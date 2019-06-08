@@ -34,8 +34,8 @@ class CreatePropertySchema(Schema):
 ##############################################################################
 
 class CreateItemSchema(Schema):
-    name = fields.String()
-    itemType = fields.String()
+    name = fields.String(required=True)
+    itemType = fields.String(required=True)
 
 class CreateTypeSchema(Schema):
     name = fields.String()
@@ -82,7 +82,6 @@ class GetPropertiesQueryStringSchema(Schema):
     offset = fields.Integer(required=False)
 
 class GetItemsQueryStringSchema(Schema):
-    itemTypeId = fields.String(required=True)
     max_results = fields.Integer(required=False)
     offset = fields.Integer(required=False)
 
@@ -93,6 +92,7 @@ class GetTypesQueryStringSchema(Schema):
 
 # Get a SINGLE item
 class GetItemQueryStringSchema(Schema):
+    itemTypeId = fields.String(required=True)
     all_properties = fields.Boolean(required=False)
 
 # Get a SINGLE type
