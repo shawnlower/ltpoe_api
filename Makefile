@@ -3,3 +3,6 @@ dev:
 
 test:
 	python -m pytest
+
+integration:
+	python -m pytest -k integration -v
