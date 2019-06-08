@@ -4,7 +4,7 @@ import ltpapi
 
 @pytest.fixture
 def client(mocker):
-    mocker.patch("ltpapi.db.SparqlDatasource.create_item", return_value=False)
+    mocker.patch("ltpapi.store.SparqlDatasource.create_item", return_value=False)
     app = ltpapi.create_app()
     client = app.test_client()
 
@@ -16,6 +16,6 @@ def client(mocker):
 
 @pytest.fixture
 def app(mocker):
-    mocker.patch("ltpapi.db.SparqlDatasource")
+    mocker.patch("ltpapi.store.SparqlDatasource")
     app = ltpapi.create_app()
     return app

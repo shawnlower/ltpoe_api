@@ -4,7 +4,7 @@ import flask
 import pytest
 
 import ltpapi
-from ltpapi.db import LtpItem
+from ltpapi.models import LtpItem
 
 def test_get_items(app):
     # app.config['endpoint'] = ''
