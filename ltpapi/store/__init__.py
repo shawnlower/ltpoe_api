@@ -5,7 +5,6 @@ import requests
 from requests.auth import HTTPBasicAuth
 import string
 
-from ltpapi import util
 from ltpapi import exceptions as err
 
 from ..models import LtpItem, LtpType, LtpProperty
@@ -553,3 +552,15 @@ def normalize_item_id(name: str):
     name = ''.join([c for c in name if c in ['.', '-'] + list(string.ascii_letters)])
     name=name.lstrip('.').rstrip('.')
     return name
+
+def get_connection(app):
+    """
+    Return a connection object, using the configuration details in the app
+    """
+
+    default_connection = SparqlDatasource
+    if 'driver' in app.config:
+        pass
+    return SparqlDatasource()
+
+

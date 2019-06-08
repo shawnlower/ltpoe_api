@@ -13,11 +13,12 @@ from .models import LtpType, LtpItem, LtpProperty
 
 from . import exceptions as err
 
+# Factory
+from .app import create_app as _create_app
+
 # Connectors, e.g. SPARQL-over-HTTP, and SQLite
 from . import store
-from .store import SparqlDatasource as DB
-
-conn = DB()
+from .store import get_connection
 
 rebar = Rebar()
 
@@ -201,14 +202,6 @@ def get_item(id):
     # Errors are converted to appropriate HTTP errors
     # raise errors.Forbidden()
 
-
-def create_app():
-    app = Flask(__name__)
-    app.config['PREFIX'] = 'schema:'
-    app.config['BASE'] = 'ltp:'
-    rebar.init_app(app)
-    return app
-
 if __name__ == '__main__':
     print('Running...')
     app = create_app()
@@ -220,4 +213,9 @@ if __name__ == '__main__':
         response.headers["Access-Control-Allow-Origin"] = "*"
         return response
 
+def create_app():
+    app = _create_app()
+    rebar.init_app(app)
+    conn = get_connection(app)
+    return app
 
