@@ -1,12 +1,12 @@
 from datetime import datetime
 import json
+import string
+
 from rdflib import ConjunctiveGraph, Graph, RDF, RDFS, OWL, URIRef
 import requests
 from requests.auth import HTTPBasicAuth
-import string
 
 from ltpapi import exceptions as err
-
 from ..models import LtpItem, LtpType, LtpProperty
 
 DEFAULT_CONFIG = {
@@ -20,10 +20,9 @@ DEFAULT_CONFIG = {
 class SparqlDatasource():
     def __init__(self, config = DEFAULT_CONFIG):
         self.config = config
-        self.g = ConjunctiveGraph('SPARQLStore',
+        self.graph = ConjunctiveGraph('SPARQLStore',
                      identifier=config['prefix'])
-        self.g.open(config['endpoint'])
-        print("Initialized SPARQL backend.")
+        self.graph.open(config['endpoint'])
 
     def create_property(self, prop):
         if not prop.validate():
@@ -89,12 +88,12 @@ class SparqlDatasource():
 
         if itemTypeId:
             item_type = URIRef(self.config['prefix'] + itemTypeId)
-            subjects = self.g.subjects(RDF.type, item_type)
+            subjects = self.graph.subjects(RDF.type, item_type)
         else:
-            all_types = self.g.transitive_subjects(RDFS.subClassOf, OWL['Thing'])
+            all_types = self.graph.transitive_subjects(RDFS.subClassOf, OWL['Thing'])
             subjects = []
             for item_type in all_types:
-                subjects += self.g.subjects(RDF.type, item_type)
+                subjects += self.graph.subjects(RDF.type, item_type)
 
         items = []
         for entity in subjects:
