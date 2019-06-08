@@ -5,8 +5,8 @@ import requests
 from requests.auth import HTTPBasicAuth
 import string
 
-import util
-import exceptions as err
+from ltpapi import util
+from ltpapi import exceptions as err
 
 DEFAULT_CONFIG = {
     'endpoint': 'http://localhost:3030/ltp',

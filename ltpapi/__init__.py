@@ -6,20 +6,20 @@ from marshmallow import fields, Schema
 from urllib.parse import unquote
 
 # Type models
-from models import TypeSchema, GetTypeQueryStringSchema, GetTypesQueryStringSchema, GetTypeResponseSchema, GetTypesResponseSchema, CreateItemResponseSchema, CreateTypeSchema, CreateItemSchema
-from models import GetItemsResponseSchema, GetItemsQueryStringSchema
+from .models import TypeSchema, GetTypeQueryStringSchema, GetTypesQueryStringSchema, GetTypeResponseSchema, GetTypesResponseSchema, CreateItemResponseSchema, CreateTypeSchema, CreateItemSchema
+from .models import GetItemsResponseSchema, GetItemsQueryStringSchema
 
 # Item models
-from models import ItemSchema, GetItemQueryStringSchema, GetItemResponseSchema
+from .models import ItemSchema, GetItemQueryStringSchema, GetItemResponseSchema
 
-import exceptions as err
+from . import exceptions as err
 
 # Property models
-from models import CreatePropertySchema, PropertySchema, PropertyValueSchema, GetPropertiesQueryStringSchema, GetPropertiesResponseSchema
+from .models import CreatePropertySchema, PropertySchema, PropertyValueSchema, GetPropertiesQueryStringSchema, GetPropertiesResponseSchema
 
-from db import SparqlDatasource as DB
-from db import LtpType, LtpItem, LtpProperty
-import db
+from . import db
+from .db import SparqlDatasource as DB
+from .db import LtpType, LtpItem, LtpProperty
 
 conn = DB()
 
@@ -204,17 +204,22 @@ def get_item(id):
     # raise errors.Forbidden()
 
 
-app = Flask(__name__)
-app.config['PREFIX'] = 'schema:'
-app.config['BASE'] = 'ltp:'
-rebar.init_app(app)
+def create_app():
+    app = Flask(__name__)
+    app.config['PREFIX'] = 'schema:'
+    app.config['BASE'] = 'ltp:'
+    rebar.init_app(app)
+    return app
 
 if __name__ == '__main__':
+    print('Running...')
+    app = create_app()
     app.run()
 
-@app.after_request
-def apply_caching(response):
-    response.headers["X-Frame-Options"] = "SAMEORIGIN"
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    return response
+    @app.after_request
+    def apply_caching(response):
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        return response
+
 
