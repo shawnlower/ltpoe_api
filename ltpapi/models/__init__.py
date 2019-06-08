@@ -1,102 +1,55 @@
-from marshmallow import fields, Schema
+class LtpItem():
+    '''Class for a single "Item" object'''
+    name: str
+    itemType: str
+    id: str = ""
+    created: str = ""
+    properties = []
+    def __init__(self, name, itemType, id=None, created=None):
+        self.name = name
+        self.id = id
+        self.itemType = itemType
+        self.created = created
 
-class ItemSchema(Schema):
-    id = fields.String()
-    name = fields.String()
-    itemType = fields.String()
+class LtpType():
+    '''Class for a single "Type" object'''
+    name: str
+    id: str = ""
+    description: str = ""
+    created: str = ""
+    properties = []
+    def __init__(self, name, description, created="", id=None):
+        self.name = name
+        self.description = description
+        self.id = id
+        self.created = created
 
-class TypeSchema(Schema):
-    id = fields.String()
-    name = fields.String()
-    description = fields.String()
+class LtpProperty():
+    '''Class for a single "Property" object'''
+    name: str
+    id: str = ""
+    value: str = ""
+    datatype: str = ""
+    def __init__(self, name, id=None, value=None, description=None, datatype=None):
+        self.name = name
+        self.id = id
+        self.value = value
+        self.description = description
+        self.datatype = datatype
 
-class PropertyValueSchema(Schema):
-    id = fields.String()
-    name = fields.String()
-    description = fields.String()
-    value = fields.String()
-    datatype = fields.String()
+    def validate(self):
+        """Ensure the property is complete and consistent.
 
-class PropertySchema(Schema):
-    id = fields.String()
-    name = fields.String()
-    description = fields.String()
-    datatype = fields.String()
+        Specifically:
+        - Required fields: name, description
+        - Datatype specifies a valid type
+        - id exists
+        """
+        required = ['name', 'description']
+        missing  = [k for k in required if not getattr(self, k)]
+        if missing:
+            raise err.InvalidProperty('Missing keys {}'.format(str(missing)))
 
-class CreatePropertySchema(Schema):
-    name = fields.String(required=True)
-    description = fields.String(required=True)
-    itemtypes = fields.List(fields.String, required=True)
-    datatypes = fields.List(fields.String, required=True)
-
-##############################################################################
-# Request schemas
-##############################################################################
-
-class CreateItemSchema(Schema):
-    name = fields.String(required=True)
-    itemType = fields.String(required=True)
-
-class CreateTypeSchema(Schema):
-    name = fields.String()
-    description = fields.String(required=False)
-
-##############################################################################
-# Outgoing response schemas
-##############################################################################
-
-class CreateItemResponseSchema(Schema):
-    item = fields.Nested(ItemSchema)
-
-class GetTypesResponseSchema(Schema):
-    data = fields.Nested(TypeSchema, many=True)
-    more = fields.Boolean()
-    results = fields.Integer()
-
-class GetTypeResponseSchema(Schema):
-    metadata = fields.Nested(TypeSchema)
-    properties = fields.Nested(PropertySchema, many=True)
-    num_properties = fields.Integer()
-
-class GetItemsResponseSchema(Schema):
-    data = fields.Nested(ItemSchema, many=True)
-    more = fields.Boolean()
-    results = fields.Integer()
-
-class GetItemResponseSchema(Schema):
-    metadata = fields.Nested(ItemSchema)
-    properties = fields.Nested(PropertyValueSchema, many=True)
-    num_properties = fields.Integer()
-
-class GetPropertiesResponseSchema(Schema):
-    metadata = fields.Nested(PropertySchema)
-    data = fields.Nested(PropertySchema, many=True)
-    num_properties = fields.Integer()
-
-##############################################################################
-# Query strings
-##############################################################################
-
-class GetPropertiesQueryStringSchema(Schema):
-    max_results = fields.Integer(required=False)
-    offset = fields.Integer(required=False)
-
-class GetItemsQueryStringSchema(Schema):
-    max_results = fields.Integer(required=False)
-    offset = fields.Integer(required=False)
-
-class GetTypesQueryStringSchema(Schema):
-    max_results = fields.Integer(required=False)
-    offset = fields.Integer(required=False)
-    parent = fields.String(required=False)
-
-# Get a SINGLE item
-class GetItemQueryStringSchema(Schema):
-    itemTypeId = fields.String(required=True)
-    all_properties = fields.Boolean(required=False)
-
-# Get a SINGLE type
-class GetTypeQueryStringSchema(Schema):
-    all_properties = fields.Boolean(required=False)
+        raise err.NotImplemented
 
 

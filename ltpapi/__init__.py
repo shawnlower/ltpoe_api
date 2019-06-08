@@ -5,21 +5,17 @@ from functools import update_wrapper
 from marshmallow import fields, Schema
 from urllib.parse import unquote
 
-# Type models
-from .models import TypeSchema, GetTypeQueryStringSchema, GetTypesQueryStringSchema, GetTypeResponseSchema, GetTypesResponseSchema, CreateItemResponseSchema, CreateTypeSchema, CreateItemSchema
-from .models import GetItemsResponseSchema, GetItemsQueryStringSchema
+# e.g. PropertySchema, TypeSchema, *RequestSchema, etc
+from .schema import *
 
 # Item models
-from .models import ItemSchema, GetItemQueryStringSchema, GetItemResponseSchema
+from .models import LtpType, LtpItem, LtpProperty
 
 from . import exceptions as err
 
-# Property models
-from .models import CreatePropertySchema, PropertySchema, PropertyValueSchema, GetPropertiesQueryStringSchema, GetPropertiesResponseSchema
-
-from . import db
-from .db import SparqlDatasource as DB
-from .db import LtpType, LtpItem, LtpProperty
+# Connectors, e.g. SPARQL-over-HTTP, and SQLite
+from . import store
+from .store import SparqlDatasource as DB
 
 conn = DB()
 
