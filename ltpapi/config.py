@@ -1,0 +1,7 @@
+STORE_TYPE = 'SparqlDatastore'
+STORE_ENDPOINT = 'http://localhost:3030/ltp'
+STORE_USERNAME = 'admin'
+STORE_PASSWORD = 'voiafa8s9dasdf23'
+STORE_PREFIX = 'http://shawnlower.net/o/'
+PREFIX = 'schema:'
+BASE = 'ltp:'

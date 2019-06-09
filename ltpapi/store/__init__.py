@@ -8,17 +8,10 @@ from requests.auth import HTTPBasicAuth
 
 from ltpapi import exceptions as err
 from ..models import LtpItem, LtpType, LtpProperty
-
-DEFAULT_CONFIG = {
-    'endpoint': 'http://localhost:3030/ltp',
-    'username': 'admin',
-    'password': 'voiafa8s9dasdf23',
-    'prefix':   'http://shawnlower.net/o/',
-}
-
+from .. import exceptions as err
 
 class SparqlDatasource():
-    def __init__(self, config = DEFAULT_CONFIG):
+    def __init__(self, config):
         self.config = config
         self.graph = ConjunctiveGraph('SPARQLStore',
                      identifier=config['prefix'])
@@ -552,14 +545,33 @@ def normalize_item_id(name: str):
     name=name.lstrip('.').rstrip('.')
     return name
 
+def unprefix_config(config, prefix):
+   """
+   Convert PREFIX_KEY=VAL to key=val
+   e.g.:
+      [('STORE_ENDPOINT', 'http://localhost:3030/ltp'), ('STORE_TYPE', 'SparqlDatastore')]
+         becomes
+      {'endpoint': 'http://localhost:3030/ltp', 'type': 'SparqlDatastore'}
+   """
+   prefix = prefix.rstrip('_')
+   return dict((k.split('_')[1].lower(), v) for (k,v) in config.items() if \
+           k.startswith(f'{prefix}_'))
+
 def get_connection(app):
     """
     Return a connection object, using the configuration details in the app
     """
+    store_config = unprefix_config(app.config, 'STORE_')
 
-    default_connection = SparqlDatasource
-    if 'driver' in app.config:
-        pass
-    return SparqlDatasource()
+    if not store_config:
+        raise(err.InvalidConfiguration(f'Missing store_config in app configuration'))
 
+    store_type = store_config.get('type')
+
+    if store_type == 'SparqlDatastore':
+        return SparqlDatasource(store_config)
+    elif store_type == 'sqlite':
+        raise(NotImplementedError(f'Store type "{store_type}" not implemented.'))
+    else:
+        raise(err.InvalidConfiguration(f'Invalid store type: "{store_type}"'))
 

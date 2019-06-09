@@ -1,9 +1,10 @@
 from datetime import timedelta
-from flask import Flask, current_app, make_response, request, current_app
-from flask_rebar import Rebar
 from functools import update_wrapper
-from marshmallow import fields, Schema
 from urllib.parse import unquote
+
+from flask import Flask, current_app, make_response, request, current_app, g
+from flask_rebar import Rebar
+from marshmallow import fields, Schema
 
 # e.g. PropertySchema, TypeSchema, *RequestSchema, etc
 from .schema import *
@@ -36,6 +37,7 @@ def get_types():
     Get a list of types from the DB
     """
     prefix = current_app.config['PREFIX']
+    conn = get_connection(current_app)
 
     args = rebar.validated_args
     max_results = args.get('max_results', 25)
@@ -207,15 +209,20 @@ if __name__ == '__main__':
     app = create_app()
     app.run()
 
+def create_app(rebar=rebar):
+
+    app = _create_app(rebar)
+
     @app.after_request
     def apply_caching(response):
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
         response.headers["Access-Control-Allow-Origin"] = "*"
         return response
 
-def create_app():
-    app = _create_app()
-    rebar.init_app(app)
-    conn = get_connection(app)
-    return app
+    @app.teardown_appcontext
+    def close_db(error):
+        if hasattr(g, 'conn'):
+            current_app.logger.debug(f'Closing connection: {g.conn}')
+
+    return app 
 
