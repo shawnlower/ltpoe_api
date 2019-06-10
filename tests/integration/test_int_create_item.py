@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from pprint import pprint
 
 import flask
@@ -7,7 +8,8 @@ import ltpapi
 from ltpapi.models import LtpItem
 
 
-def test_valid_item():
+@patch("ltpapi.store.SparqlDatasource.create_item")
+def test_valid_item(mock_create_item):
     """
     Assuming that our connection returns a valid LtpItem
     the API should accept and return that item

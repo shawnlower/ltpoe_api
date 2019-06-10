@@ -1,0 +1,10 @@
+gs=ConjunctiveGraph('SQLite')
+gs.open('/tmp/test.sqlite', create=False)
+
+url='http://localhost:3030/ltp'
+gq=ConjunctiveGraph('SPARQLStore', identifier='http://shawnlower.net/o/')
+gq.open(url)
+ 
+from io import StringIO
+gs.parse(StringIO(gq.serialize(format='n3').decode('utf-8')))
+

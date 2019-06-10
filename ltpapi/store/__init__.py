@@ -9,6 +9,7 @@ from requests.auth import HTTPBasicAuth
 from ltpapi import exceptions as err
 from ..models import LtpItem, LtpType, LtpProperty
 from .. import exceptions as err
+from .drivers import SqliteDatasource
 
 class SparqlDatasource():
     def __init__(self, config):
@@ -566,12 +567,12 @@ def get_connection(app):
     if not store_config:
         raise(err.InvalidConfiguration(f'Missing store_config in app configuration'))
 
-    store_type = store_config.get('type')
+    store_type = store_config.get('type').lower()
 
-    if store_type == 'SparqlDatastore':
+    if store_type == 'sparqldatastore':
         return SparqlDatasource(store_config)
     elif store_type == 'sqlite':
-        raise(NotImplementedError(f'Store type "{store_type}" not implemented.'))
+        return SqliteDatasource(store_config)
     else:
         raise(err.InvalidConfiguration(f'Invalid store type: "{store_type}"'))
 

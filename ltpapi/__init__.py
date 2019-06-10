@@ -170,6 +170,7 @@ def create_property():
 )
 def create_item():
     body = rebar.validated_body
+    conn = get_connection(current_app)
 
     i = LtpItem(**body)
     try:
