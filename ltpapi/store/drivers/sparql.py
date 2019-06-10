@@ -8,7 +8,7 @@ from requests.auth import HTTPBasicAuth
 from ..utils import normalize_iri, normalize_type_id, normalize_item_id
 from ltpapi.models import LtpItem, LtpType, LtpProperty
 
-class SparqlDatasource():
+class SparqlDatastore():
     def __init__(self, config):
         self.config = config
         self.graph = ConjunctiveGraph('SPARQLStore',

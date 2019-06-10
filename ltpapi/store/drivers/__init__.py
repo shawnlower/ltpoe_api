@@ -1,2 +1,2 @@
-from .sqlite import SqliteDatasource
-from .sparql import SparqlDatasource
+from .sqlite import SqliteDatastore
+from .sparql import SparqlDatastore

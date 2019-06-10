@@ -14,7 +14,7 @@ def test_invalid_path(client):
     assert rv.status_code == 404
 
 
-@patch("ltpapi.store.SparqlDatasource.create_item")
+@patch("ltpapi.store.SparqlDatastore.create_item")
 def test_valid_item(mock_create_item):
     """
     Assuming that our connection returns a valid LtpItem
@@ -40,7 +40,7 @@ def test_valid_item(mock_create_item):
                ('itemType', itemType) in response_item.items()
 
 
-@patch("ltpapi.store.SparqlDatasource.create_item")
+@patch("ltpapi.store.SparqlDatastore.create_item")
 def test_create_item_on_db_failure(mock_create_item):
     """
     We should get a generic error back on DB failures

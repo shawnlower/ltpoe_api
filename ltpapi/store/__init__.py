@@ -1,7 +1,7 @@
 from ltpapi import exceptions as err
 from ..models import LtpItem, LtpType, LtpProperty
 from .. import exceptions as err
-from .drivers import SqliteDatasource, SparqlDatasource
+from .drivers import SqliteDatastore, SparqlDatastore
 from .utils import unprefix_config
 
 def get_connection(app):
@@ -16,9 +16,9 @@ def get_connection(app):
     store_type = store_config.get('type').lower()
 
     if store_type == 'sparqldatastore':
-        return SparqlDatasource(store_config)
+        return SparqlDatastore(store_config)
     elif store_type == 'sqlite':
-        return SqliteDatasource(store_config)
+        return SqliteDatastore(store_config)
     else:
         raise(err.InvalidConfiguration(f'Invalid store type: "{store_type}"'))
 

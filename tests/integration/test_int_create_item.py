@@ -8,7 +8,7 @@ import ltpapi
 from ltpapi.models import LtpItem
 
 
-@patch("ltpapi.store.SparqlDatasource.create_item")
+@patch("ltpapi.store.SparqlDatastore.create_item")
 def test_valid_item(mock_create_item):
     """
     Assuming that our connection returns a valid LtpItem
