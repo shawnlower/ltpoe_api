@@ -1,0 +1,357 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://webprotege.stanford.edu/project/8HbdC5r1akUhvubSQSu9d2#"
+     xml:base="http://webprotege.stanford.edu/project/8HbdC5r1akUhvubSQSu9d2"
+     xmlns:gr="http://purl.org/goodrelations/v1#"
+     xmlns:ltp="http://shawnlower.net/o/"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:foaf="http://xmlns.com/foaf/0.1/"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:schema="http://schema.org/">
+    <owl:Ontology rdf:about="http://webprotege.stanford.edu/project/8HbdC5r1akUhvubSQSu9d2"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.w3.org/2000/01/rdf-schema#subPropertyOf -->
+
+    <owl:AnnotationProperty rdf:about="http://www.w3.org/2000/01/rdf-schema#subPropertyOf">
+        <rdfs:label xml:lang="en-us">subPropertyOf</rdfs:label>
+    </owl:AnnotationProperty>
+    
+
+
+    <!-- http://www.w3.org/2002/07/owl#equivalentProperty -->
+
+    <owl:AnnotationProperty rdf:about="http://www.w3.org/2002/07/owl#equivalentProperty">
+        <rdfs:label xml:lang="en-us">equivalentProperty</rdfs:label>
+    </owl:AnnotationProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://shawnlower.net/o/address -->
+
+    <owl:ObjectProperty rdf:about="http://shawnlower.net/o/address">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://shawnlower.net/o/Place"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A physical location</rdfs:comment>
+        <rdfs:label xml:lang="en-us">address</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://shawnlower.net/o/author -->
+
+    <owl:ObjectProperty rdf:about="http://shawnlower.net/o/author">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://shawnlower.net/o/CreativeWork"/>
+        <rdfs:range rdf:resource="http://shawnlower.net/o/Person"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The author of the work</rdfs:comment>
+        <rdfs:label xml:lang="en-us">author</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://shawnlower.net/o/created -->
+
+    <owl:ObjectProperty rdf:about="http://shawnlower.net/o/created">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A timestamp indicating when the resource was created</rdfs:comment>
+        <rdfs:label xml:lang="en-us">created</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://shawnlower.net/o/illustrator -->
+
+    <owl:ObjectProperty rdf:about="http://shawnlower.net/o/illustrator">
+        <rdfs:domain rdf:resource="http://shawnlower.net/o/Book"/>
+        <rdfs:range rdf:resource="http://shawnlower.net/o/Person"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The illustrator of the work</rdfs:comment>
+        <rdfs:label xml:lang="en-us">illustrator</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://shawnlower.net/o/lists -->
+
+    <owl:ObjectProperty rdf:about="http://shawnlower.net/o/lists">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:comment xml:lang="en-us">handles the offering of a listing (e.g. for the renting or owning of a property).</rdfs:comment>
+        <rdfs:label xml:lang="en-us">lists</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://shawnlower.net/o/owns -->
+
+    <owl:ObjectProperty rdf:about="http://shawnlower.net/o/owns">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://shawnlower.net/o/Person"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:label xml:lang="en-us">owns</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://shawnlower.net/o/relatedGoal -->
+
+    <owl:ObjectProperty rdf:about="http://shawnlower.net/o/relatedGoal">
+        <rdfs:domain rdf:resource="http://shawnlower.net/o/Task"/>
+        <rdfs:range rdf:resource="http://shawnlower.net/o/Goal"/>
+        <rdfs:comment xml:lang="en-us">The goal that this task helps to achieve.</rdfs:comment>
+        <rdfs:label xml:lang="en-us">relatedGoal</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://shawnlower.net/o/text -->
+
+    <owl:ObjectProperty rdf:about="http://shawnlower.net/o/text">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://shawnlower.net/o/CreativeWork"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The actual content of the creative work.</rdfs:comment>
+        <rdfs:label xml:lang="en-us">text</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://webprotege.stanford.edu/R7aeOHYN9hTukkEfb1nBtxL -->
+
+    <owl:ObjectProperty rdf:about="http://webprotege.stanford.edu/R7aeOHYN9hTukkEfb1nBtxL">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://shawnlower.net/o/Account"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">providedBy</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://schema.org/accountId -->
+
+    <owl:ObjectProperty rdf:about="https://schema.org/accountId">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:label xml:lang="en-us">accountId</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://shawnlower.net/o/isbn -->
+
+    <owl:DatatypeProperty rdf:about="http://shawnlower.net/o/isbn">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+        <rdfs:domain rdf:resource="http://shawnlower.net/o/CreativeWork"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The ISBN number for the work.</rdfs:comment>
+        <rdfs:label xml:lang="en-us">isbn</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://shawnlower.net/o/name -->
+
+    <owl:DatatypeProperty rdf:about="http://shawnlower.net/o/name">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+        <rdfs:domain rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A descriptive label used to refer to the item</rdfs:comment>
+        <rdfs:label xml:lang="en-us">name</rdfs:label>
+        <rdfs:subPropertyOf rdf:datatype="http://www.w3.org/2001/XMLSchema#string">rdfs:label</rdfs:subPropertyOf>
+        <owl:equivalentProperty rdf:datatype="http://www.w3.org/2001/XMLSchema#string">dct:title</owl:equivalentProperty>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://webprotege.stanford.edu/ResxWsZIrG3KrMqHL6ll3h -->
+
+    <owl:DatatypeProperty rdf:about="http://webprotege.stanford.edu/ResxWsZIrG3KrMqHL6ll3h">
+        <rdfs:label xml:lang="en-us">accountId</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://shawnlower.net/o/Accommodation -->
+
+    <owl:Class rdf:about="http://shawnlower.net/o/Accommodation">
+        <rdfs:subClassOf rdf:resource="http://shawnlower.net/o/Place"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A place that can accommodate human beings, e.g. a hotel room, campsite, or meeting room.</rdfs:comment>
+        <rdfs:label xml:lang="en-us">Accommodation</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://shawnlower.net/o/Account -->
+
+    <owl:Class rdf:about="http://shawnlower.net/o/Account">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An account used for describing a relationship between two agents, for example a person&apos;s credit account at a utility provider.</rdfs:comment>
+        <rdfs:label xml:lang="en-us">Account</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://shawnlower.net/o/Book -->
+
+    <owl:Class rdf:about="http://shawnlower.net/o/Book">
+        <rdfs:subClassOf rdf:resource="http://shawnlower.net/o/CreativeWork"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A book, physical or digital</rdfs:comment>
+        <rdfs:label xml:lang="en-us">Book</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://shawnlower.net/o/CreativeWork -->
+
+    <owl:Class rdf:about="http://shawnlower.net/o/CreativeWork">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:label xml:lang="en-us">CreativeWork</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://shawnlower.net/o/Event -->
+
+    <owl:Class rdf:about="http://shawnlower.net/o/Event">
+        <rdfs:label xml:lang="en-us">Event</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://shawnlower.net/o/Goal -->
+
+    <owl:Class rdf:about="http://shawnlower.net/o/Goal">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A clearly defined state that can be measured against</rdfs:comment>
+        <rdfs:label xml:lang="en-us">Goal</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://shawnlower.net/o/House -->
+
+    <owl:Class rdf:about="http://shawnlower.net/o/House">
+        <rdfs:subClassOf rdf:resource="http://shawnlower.net/o/Accommodation"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A building or structure with the ability to be occupied for habitation by humans or other creatures.</rdfs:comment>
+        <rdfs:label xml:lang="en-us">House</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://shawnlower.net/o/Person -->
+
+    <owl:Class rdf:about="http://shawnlower.net/o/Person">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A person (alive, dead, undead, or fictional)</rdfs:comment>
+        <rdfs:label xml:lang="en-us">Person</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://shawnlower.net/o/Place -->
+
+    <owl:Class rdf:about="http://shawnlower.net/o/Place">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An entity with a particular position or point in space.</rdfs:comment>
+        <rdfs:label xml:lang="en-us">Place</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://shawnlower.net/o/Quote -->
+
+    <owl:Class rdf:about="http://shawnlower.net/o/Quote">
+        <rdfs:subClassOf rdf:resource="http://shawnlower.net/o/CreativeWork"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A statement that succinctly encapsulates a particularly poignant concept or idea</rdfs:comment>
+        <rdfs:label xml:lang="en-us">Quote</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://shawnlower.net/o/RealEstateAgent -->
+
+    <owl:Class rdf:about="http://shawnlower.net/o/RealEstateAgent">
+        <rdfs:subClassOf rdf:resource="http://shawnlower.net/o/Person"/>
+        <rdfs:comment xml:lang="en-us">A person who sells and rents out buildings and land for clients.</rdfs:comment>
+        <rdfs:label xml:lang="en-us">RealEstateAgent</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://shawnlower.net/o/Task -->
+
+    <owl:Class rdf:about="http://shawnlower.net/o/Task">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:comment xml:lang="en-us">A small unit of work toward achieving a goal</rdfs:comment>
+        <rdfs:label xml:lang="en-us">Task</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://test.shawnlower.net/voc/0.1/TestAccount -->
+
+    <owl:NamedIndividual rdf:about="http://test.shawnlower.net/voc/0.1/TestAccount">
+        <rdf:type rdf:resource="http://shawnlower.net/o/Account"/>
+        <rdfs:label xml:lang="en-us">TestAccount</rdfs:label>
+    </owl:NamedIndividual>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.5.10) https://github.com/owlcs/owlapi -->
+
