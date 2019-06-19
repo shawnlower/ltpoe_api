@@ -67,6 +67,7 @@ def get_items():
     Get a list of types from the DB
     """
     
+    conn = get_connection(current_app)
     args = rebar.validated_args
     max_results = args.get('max_results', 25)
     offset = args.get('offset', 0)

@@ -1,4 +1,7 @@
+import json
 from pprint import pprint
+import os
+import tempfile
 from unittest.mock import Mock, patch
 
 import flask
@@ -6,7 +9,40 @@ import pytest
 
 import ltpapi
 from ltpapi.models import LtpItem
+from ltpapi.store import get_connection
+from ltpapi.store.drivers import SqliteDatastore
 
+
+@pytest.fixture()
+def client():
+    """
+    Setup our store with some fake data. Ensure that get_items
+    returns what we expect.
+    """
+    app = ltpapi.create_app()
+    db_fd, db_filename = tempfile.mkstemp()
+
+    cfg = { k: v for k,v in app.config.items() if not
+            k.lower().startswith('store') }
+    cfg.update({
+            'STORE_TYPE': 'sqlite',
+            'STORE_FILE': db_filename,
+            'STORE_CREATE': 'True',
+            'STORE_PREFIX': 'http://shawnlower.net/o/'
+    })
+
+    app.config = cfg
+    client = app.test_client()
+    with app.app_context():
+        conn = get_connection(app)
+        #conn.load('tests/testdata/root-ontology.owl')
+        conn.load('tests/testdata/data.rdf')
+    app.config['STORE_CREATE'] = 'false'
+
+    print("setup: {} triples loaded.".format(len(conn._graph)))
+    yield client
+    os.close(db_fd)
+    print("teardown")
 
 class TestItem():
     def setUp(self):
@@ -16,6 +52,19 @@ class TestItem():
         path = 'foobizbar'
         rv = client.get(path)
         assert rv.status_code == 404
+
+    def test_get_items(self, client):
+
+        path = '/api/v1/items/'
+        rv = client.get(path)
+
+
+        print('got', rv)
+        assert rv.status_code == 200, (rv, rv.data)
+        resp = json.loads(rv.data)
+        pprint(resp['data'])
+        assert len(resp['data']) == 8
+
 
 
     @patch("ltpapi.store.SparqlDatastore.create_item")
