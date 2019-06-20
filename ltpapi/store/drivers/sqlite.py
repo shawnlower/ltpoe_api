@@ -1,7 +1,10 @@
 from rdflib import ConjunctiveGraph, Graph, RDF, RDFS, OWL
 from rdflib import Variable, URIRef
+from rdflib.namespace import NamespaceManager, Namespace
 
 from ltpapi.models import LtpItem, LtpType, LtpProperty
+from ..utils import normalize_iri, normalize_type_id, normalize_item_id
+
 
 class SqliteDatastore():
     def __init__(self, config):
@@ -13,6 +16,16 @@ class SqliteDatastore():
         self._graph = ConjunctiveGraph('SQLite',
                      identifier=config['prefix'])
         self._graph.open(config['file'], create=do_create)
+
+        # Bind our namespace
+        self.ns = Namespace(self.config['prefix'])
+        self._namespace_manager = NamespaceManager(self._graph)
+        self._namespace_manager.bind(
+                'ltp',
+                self.ns,
+                override=False)
+
+        self._graph.namespace_manager = self._namespace_manager
 
     def dump(self, format='n3') -> str:
         """
@@ -51,46 +64,36 @@ class SqliteDatastore():
         items = []
         for entity in subjects:
             # extract the localname / ID portion of the IRI
-            id = entity.partition(self.config['prefix'])[2]
-            items.append(self.get_item(id))
+            item_id = entity.partition(self.config['prefix'])[2]
+            item = self.get_item(item_id)
+            if item:
+                items.append(item)
 
         return (items, False)
 
-    def get_item(self, id: str):
+    def get_item(self, item_id: str):
         """
         Return a single item definition.
         """
-        query = f"""
-            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            PREFIX schema: <http://schema.org/>
-            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-            PREFIX ltp: <{self.config['prefix']}>
+        ns = self.ns
 
-            SELECT DISTINCT ?iri ?name ?itemType ?created
-            WHERE {{
-                BIND(ltp:{id} as ?iri) .
+        # properties is a dict() e.g.:
+        # { ns.created: <rdflib.term.Literal>, ...}
+        properties = dict(self._graph[ns[item_id]])
 
-               ?iri rdfs:label ?name .
-               ?iri rdf:type ?itemType .
-               # ?iri ltp:created ?created .
-            }}
-            ORDER BY ?type
-        """
-        response = self._graph.query(query)
-        bindings = response.bindings
-        if not bindings:
+        try:
+            item = LtpItem(
+                id=item_id,
+                name=properties[RDFS.label],
+                created=properties[ns.created],
+                itemType=properties[RDF.type],
+            )
+        except KeyError as e:
+            #log.warning("Invalid item in DB: item={}. Error: {}".format(
+            #    item_id,
+            #    str(e)
+            #))
             return None
-        if len(bindings) > 1:
-            logger.warn("Received {} bindings. Expected a single item".format(
-                len(bindings)))
-        binding=bindings[0]
-
-        item = LtpItem(
-            id=id,
-            name=binding[Variable('name')],
-            itemType=binding[Variable('itemType')]
-        )
-        # created=binding[Variable('created')],
 
         return item
 
