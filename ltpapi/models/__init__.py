@@ -5,7 +5,8 @@ class LtpItem():
     id: str = ""
     created: str = ""
     properties = []
-    def __init__(self, name, itemType, id=None, created=None):
+    def __init__(self, name, itemType, item_id=None, created=None, 
+            namespace=None):
         self.name = name
         self.id = id
         self.itemType = itemType
@@ -14,15 +15,19 @@ class LtpItem():
 class LtpType():
     '''Class for a single "Type" object'''
     name: str
-    id: str = ""
     description: str = ""
     created: str = ""
     properties = []
-    def __init__(self, name, description, created="", id=None):
+    def __init__(self, name, description, namespace, created=None,
+            type_id=None):
         self.name = name
+        self.namespace = namespace
         self.description = description
-        self.id = id
+        self.type_id = type_id
         self.created = created
+
+    def get_uri(self):
+        return self.namespace.term(self.type_id)
 
 class LtpProperty():
     '''Class for a single "Property" object'''

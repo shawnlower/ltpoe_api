@@ -58,13 +58,23 @@ class TestItem():
         path = '/api/v1/items/'
         rv = client.get(path)
 
-
-        print('got', rv)
         assert rv.status_code == 200, (rv, rv.data)
         resp = json.loads(rv.data)
-        pprint(resp['data'])
-        assert len(resp['data']) == 8
+        pprint("got: " + str(resp['data']))
+        assert len(resp['data']) == 7
 
+    def test_create_item(self, client):
+
+        path = '/api/v1/items'
+        data = {
+            'itemType': 'Person',
+            'name': 'Test Name'
+        }
+        rv = client.post(path, json=data)
+
+        print('got', rv)
+        assert rv.status_code == 201, (rv, rv.data)
+        pprint(resp['data'])
 
 
     @patch("ltpapi.store.SparqlDatastore.create_item")

@@ -133,10 +133,15 @@ def get_type(name):
 )
 def create_type():
     body = rebar.validated_body
-    t = LtpType(**body)
-    conn.create_type(t)
+    conn = get_connection(current_app)
+
+    t = conn.create_type(**body)
     # Generate URI from prefix
-    return t, 201
+    type_response = {
+        name: t.name,
+        description: t.description,
+    }
+    return type_response, 201
 
 @registry.handles(
     rule='/properties',
@@ -173,9 +178,8 @@ def create_item():
     body = rebar.validated_body
     conn = get_connection(current_app)
 
-    i = LtpItem(**body)
     try:
-        item = conn.create_item(i.name, i.itemType)
+        item = conn.create_item(body['name'], body['itemType'])
     except Exception as e:
         raise err.InternalError()
 

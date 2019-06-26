@@ -1,6 +1,6 @@
 from flask_rebar.errors import *
 
-class InvalidProperty(ValueError):
+class InvalidPropertyError(ValueError):
     def __init__(self, msg=None):
         if not msg:
             self.msg = "Property object is invalid or incomplete."
@@ -8,7 +8,15 @@ class InvalidProperty(ValueError):
             self.msg = msg
         super(InvalidPropertyError, self).__init__(self.msg)
 
-class InvalidConfiguration(SyntaxError):
+class InvalidTypeError(ValueError):
+    def __init__(self, msg=None):
+        if not msg:
+            self.msg = "Type object is invalid or incomplete."
+        else:
+            self.msg = msg
+        super(InvalidTypeError, self).__init__(self.msg)
+
+class InvalidConfigurationError(SyntaxError):
     def __init__(self, msg=None):
         if not msg:
             self.msg = "Application configuration is invalid"
@@ -16,3 +24,10 @@ class InvalidConfiguration(SyntaxError):
             self.msg = msg
         super(SyntaxError, self).__init__(self.msg)
 
+class NotFoundError(ValueError):
+    def __init__(self, msg=None):
+        if not msg:
+            self.msg = "Not found"
+        else:
+            self.msg = msg
+        super(SyntaxError, self).__init__(self.msg)

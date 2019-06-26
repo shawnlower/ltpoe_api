@@ -19,7 +19,7 @@ def sqlite_connection():
     yield get_connection(app)
     db.close()
 
-class TestItem():
+class TestSqlite():
 
     def test_load(self, sqlite_connection):
         """Ensure we can load data from a file (in RDF/OWL format)"""
@@ -42,12 +42,29 @@ class TestItem():
         assert data in n3
         assert len(n3) == expected_len
 
-    def test_create_type(self, sqlite_connection):
+    def test_create_type_no_parent(self, sqlite_connection):
         """Ensure we can create a basic LtpType and then read it back"""
         conn = sqlite_connection
-        t = LtpType('test name', 'this is a test description')
+        name = 'Book'
+        desc = 'A physical or digital book'
+        resp = conn.create_type(name, desc)
 
-        conn.create_type(t)
+        assert type(resp) == LtpType
+        assert str(resp.name) == name
+        assert str(resp.description) == desc
+
+    def test_create_type_with_parent(self, sqlite_connection):
+        """Ensure we can create a basic LtpType and then read it back"""
+        conn = sqlite_connection
+        name = 'Ebook'
+        parent = 'Book'
+        desc = 'A digital book'
+        resp = conn.create_type(name, desc, parent)
+
+        assert type(resp) == LtpType
+        assert str(resp.name) == name
+        assert str(resp.description) == desc
+
 
 
 
