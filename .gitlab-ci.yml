@@ -6,6 +6,8 @@ image: python:latest
 before_script:
   - python -V  # Print out python version for debugging
   - pip install pipenv
+  - pipenv update
+  - pipenv run sh -c 'echo $PATH'
 
 test:
   script:
