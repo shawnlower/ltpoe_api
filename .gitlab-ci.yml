@@ -15,4 +15,4 @@ test:
 
 run:
   script:
-    - FLASK_APP=ltpapi FLASK_ENV=development pipenv run flask run
+    - FLASK_APP=ltpapi FLASK_ENV=development pipenv run flask routes
