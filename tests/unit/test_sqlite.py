@@ -64,8 +64,3 @@ class TestSqlite():
         assert type(resp) == LtpType
         assert str(resp.name) == name
         assert str(resp.description) == desc
-
-
-
-
-
