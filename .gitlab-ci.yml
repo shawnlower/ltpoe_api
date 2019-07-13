@@ -6,12 +6,11 @@ image: python:latest
 before_script:
   - python -V  # Print out python version for debugging
   - pip install pipenv
-  - pipenv shell
 
 test:
   script:
-    - python -m pytest
+    - FLASK_APP=ltpapi FLASK_ENV=development pipenv run python -m pytest
 
 run:
   script:
-    - FLASK_APP=ltpapi FLASK_ENV=development flask run
+    - FLASK_APP=ltpapi FLASK_ENV=development pipenv run flask run
