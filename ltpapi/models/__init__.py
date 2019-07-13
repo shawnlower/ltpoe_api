@@ -2,13 +2,13 @@ class LtpItem():
     '''Class for a single "Item" object'''
     name: str
     itemType: str
-    id: str = ""
+    item_id: str = ""
     created: str = ""
     properties = []
     def __init__(self, name, itemType, item_id=None, created=None, 
             namespace=None):
         self.name = name
-        self.id = id
+        self.item_id = item_id
         self.itemType = itemType
         self.created = created
 

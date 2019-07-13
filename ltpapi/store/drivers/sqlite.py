@@ -253,10 +253,10 @@ class SqliteDatastore():
                 itemType=properties[RDF.type],
             )
         except KeyError as e:
-            log.warning("Invalid item in DB: item={}. Error: {}".format(
-                item_id,
-                str(e)
-            ))
+            #log.warning("Invalid item in DB: item={}. Error: {}".format(
+            #    item_id,
+            #    str(e)
+            #))
             return None
 
         return item
