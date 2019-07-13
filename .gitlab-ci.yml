@@ -11,7 +11,7 @@ before_script:
 
 test:
   script:
-    - FLASK_APP=ltpapi FLASK_ENV=development pipenv run python -m pytest -v
+    - FLASK_APP=ltpapi FLASK_ENV=development pipenv run python -m pytest -v -k 'not test_sparql'
 
 run:
   script:

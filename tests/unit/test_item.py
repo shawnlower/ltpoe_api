@@ -77,32 +77,6 @@ class TestItem():
         pprint(rv.data)
 
 
-    @patch("ltpapi.store.SparqlDatastore.create_item")
-    def test_valid_item(self, mock_create_item):
-        """
-        Assuming that our connection returns a valid LtpItem
-        the API should accept and return that item
-        """
-
-        name='A test thing'
-        itemType='Thing'
-
-        item = LtpItem(name=name, itemType=itemType, id=0)
-        mock_create_item.return_value = item
-
-        app = ltpapi.create_app()
-        with app.test_client() as c:
-            path = '/api/v1/items'
-            rv = c.post(path,
-                    json={'name': name, 'itemType': itemType})
-
-            assert 'item' in rv.json
-            response_item = rv.json['item'] 
-
-            assert ('name', name) in response_item.items() and \
-                   ('itemType', itemType) in response_item.items()
-
-
     #@patch("ltpapi.store.SparqlDatastore.create_item")
     #def test_create_item_on_db_failure(self, mock_create_item):
     #    """
