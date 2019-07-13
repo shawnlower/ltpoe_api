@@ -1,3 +1,6 @@
+import time
+import uuid
+
 from rdflib import ConjunctiveGraph, Graph, RDF, RDFS, OWL
 from rdflib import Variable, URIRef, Literal
 from rdflib.namespace import NamespaceManager, Namespace
@@ -101,10 +104,33 @@ class SqliteDatastore():
         assert type(property_uri) == URIRef
 
         # Ensure property exists
-        t = (prop_uri, RDF.type, OWL.DatatypeProperty)
+        t = (property_uri, RDF.type, OWL.DatatypeProperty)
         if not t in self._graph:
             raise InvalidPropertyError(f'Property does not exist: {property_id}')
-        raise NotImplementedError
+
+        label = str(self._get_label(property_uri))
+        desc = str(self._get_description(property_uri))
+        return LtpProperty(name=label, description=desc)
+
+
+    def _get_description(self, uri):
+        values = list(self._graph[uri:RDFS.comment])
+        if values:
+            return values[0]
+        else:
+            return None
+
+
+    def _get_label(self, uri):
+        values = list(self._graph[uri:RDFS.label])
+        if values:
+            return values[0]
+        else:
+            return None
+
+
+    def _uri_to_local(self, uri):
+        return uri.partition(self.config['prefix'])[2]
 
     def get_property(self, property_id: str) -> LtpProperty:
         """
@@ -115,9 +141,40 @@ class SqliteDatastore():
         ns = self.namespace
 
         # Ensure property exists
-        prop_uri = self._get_property(ns[property_id])
+        return self._get_property(ns[property_id])
 
-        raise NotImplementedError('get_property not implemented')
+    def _reserve_iri(self, iri, auto_suffix_max=0):
+        """
+        Reserve a name in the store
+
+        On success, return the name
+        On failure, return False
+        """
+        uriref = URIRef(iri)
+        found = False
+        for suffix in [''] + [str(n) for n in range(auto_suffix_max)]:
+            existing = list(self._graph[uriref])
+            if existing:
+                continue
+
+            # Create metadata
+            # A unique ID to prevent collisions
+            # A timestamp to allow async cleanup
+            lock_id = URIRef(uuid.uuid4().urn)
+            lock_ts = Literal(time.time_ns())
+            created = self._local_to_uriref('created')
+            self._graph.add((uriref, created, lock_ts))
+
+            # Query again to ensure it's still unique
+            unexpected = [e for e in self._graph[uriref:created] if not e == lock_ts]
+            if unexpected: # collision
+                continue
+            else:
+                found = True
+                break
+
+        return uriref if found else False
+
 
     def create_type(self, name: str, description: str,
             parent_name=None) -> LtpType:
@@ -185,6 +242,13 @@ class SqliteDatastore():
     def get_type(self, name):
         self._get_type(self.namespace.term(name))
 
+    def _local_to_uriref(self, localname):
+        return URIRef(self._local_to_uri(localname))
+
+    def _local_to_uri(self, localname):
+        return self.config['prefix'] + localname
+
+
     def create_item(self, name: str, item_type: str, properties={}) -> LtpType:
         """
         Create a new item
@@ -212,8 +276,10 @@ class SqliteDatastore():
             raise InvalidPropertyError(
                     f"Invalid properties: {str(invalid_props)}")
 
-        raise
         ns = self.namespace
+
+        norm_name = normalize_item_id(name)
+        item_id = self._reserve_iri(self.config['prefix'] + norm_name)
 
         # properties is a dict() e.g.:
         # { ns.created: <rdflib.term.Literal>, ...}
@@ -221,7 +287,7 @@ class SqliteDatastore():
 
         try:
             item = LtpItem(
-                id=item_id,
+                item_id=item_id,
                 name=properties[RDFS.label],
                 created=properties[ns.created],
                 itemType=properties[RDF.type],

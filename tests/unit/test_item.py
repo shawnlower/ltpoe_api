@@ -74,7 +74,7 @@ class TestItem():
 
         print('got', rv)
         assert rv.status_code == 201, (rv, rv.data)
-        pprint(resp['data'])
+        pprint(rv.data)
 
 
     @patch("ltpapi.store.SparqlDatastore.create_item")
@@ -103,20 +103,20 @@ class TestItem():
                    ('itemType', itemType) in response_item.items()
 
 
-    @patch("ltpapi.store.SparqlDatastore.create_item")
-    def test_create_item_on_db_failure(self, mock_create_item):
-        """
-        We should get a generic error back on DB failures
-        """
+    #@patch("ltpapi.store.SparqlDatastore.create_item")
+    #def test_create_item_on_db_failure(self, mock_create_item):
+    #    """
+    #    We should get a generic error back on DB failures
+    #    """
 
-        mock_create_item.side_effect = Exception('Boom')
+    #    mock_create_item.side_effect = Exception('Boom')
 
-        app = ltpapi.create_app()
-        with app.test_client() as c:
-            path = '/api/v1/items'
-            rv = c.post(path,
-                   json={'itemType': 'Thing', 'name': 'A test thing'})
-            assert rv.status_code == 500, (rv, rv.data)
+    #    app = ltpapi.create_app()
+    #    with app.test_client() as c:
+    #        path = '/api/v1/items'
+    #        rv = c.post(path,
+    #               json={'itemType': 'Thing', 'name': 'A test thing'})
+    #        assert rv.status_code == 500, (rv, rv.data)
 
 
     def test_invalid_item(self, client):
