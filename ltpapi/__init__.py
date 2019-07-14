@@ -11,7 +11,6 @@ from .schema import *
 
 # Item models
 from .models import LtpType, LtpItem, LtpProperty
-
 from . import exceptions as err
 
 # Factory
@@ -194,7 +193,6 @@ def get_item(id):
     """
     Get a single Item from the DB
     """
-    #args = rebar.validated_args
 
     item = conn.get_item(id)
 
@@ -230,5 +228,5 @@ def create_app(rebar=rebar):
         if hasattr(g, 'conn'):
             current_app.logger.debug(f'Closing connection: {g.conn}')
 
-    return app 
+    return app
 
