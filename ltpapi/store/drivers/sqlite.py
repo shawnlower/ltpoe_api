@@ -1,3 +1,5 @@
+import logging
+import os
 import time
 import uuid
 
@@ -9,17 +11,34 @@ from ltpapi.models import LtpItem, LtpType, LtpProperty
 from ..utils import normalize_iri, normalize_type_id, normalize_item_id
 from ltpapi.exceptions import *
 
+# Setup a logger for use outside the flask context
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
+log = logging.getLogger()
 
 class SqliteDatastore():
+
     def __init__(self, config):
         self.config = config
 
         # Whether to create a new file for the backing store
-        do_create = self.config.get('create', 'true').lower() == 'true'
+        if not 'create' in self.config:
+            self.config['create'] = "true"
+
+        do_create = self.config.get('create').lower() == 'true'
 
         self._graph = ConjunctiveGraph('SQLite',
                      identifier=config['prefix'])
-        self._graph.open(config['file'], create=do_create)
+
+        if not 'file' in config:
+            raise InvalidConfigurationError("Missing 'STORE_FILE' key in config")
+
+        db_file = config['file']
+        if do_create and not os.path.exists(db_file):
+            log.info(f"Creating: {db_file}")
+            self._graph.open(db_file, create=True)
+        else:
+            log.info(f"Using existing DB: {db_file}")
+            self._graph.open(db_file, create=False)
 
         # Bind our namespace
         self.namespace = Namespace(self.config['prefix'])

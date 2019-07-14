@@ -1,5 +1,6 @@
 import os
 from pprint import pprint
+import sys
 
 import click
 from flask import Flask, current_app, make_response, request, current_app
@@ -17,6 +18,7 @@ def create_app(rebar):
         app.config.from_envvar('APP_CONFIG')
 
     conn = get_connection(app)
+
     app.logger.info(f'Created connection using {app.config["STORE_TYPE"]}')
 
     # Add all commands from the utils module
