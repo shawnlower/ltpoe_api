@@ -1,8 +1,8 @@
 dev:
-	FLASK_APP=ltpapi FLASK_ENV=development flask run
+	FLASK_APP=ltpapi FLASK_ENV=development pipenv run flask run
 
 test:
-	python -m pytest
+	pipenv run python -m pytest
 
 integration:
-	python -m pytest -k integration -v
+	pipenv run python -m pytest -k integration -v
