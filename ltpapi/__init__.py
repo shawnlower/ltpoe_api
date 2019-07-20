@@ -101,6 +101,7 @@ def get_type(name):
     Get a list of types from the DB
     """
     args = rebar.validated_args
+    conn = get_connection(current_app)
 
     current_app.logger.debug(f'Getting type for name: {name}')
     t = conn.get_type(name)
@@ -108,7 +109,7 @@ def get_type(name):
     if not t:
         raise err.NotFound()
 
-    properties = conn.get_properties_for_type(t.id, args.get('all_properties', True))
+    properties = conn.get_properties_for_type(t.type_id, args.get('all_properties'))
 
     return { 'metadata': t,
              'properties': properties,

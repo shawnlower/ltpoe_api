@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import time
+from typing import List
 import uuid
 
 from rdflib import ConjunctiveGraph, Graph, RDF, RDFS, OWL
@@ -147,7 +148,8 @@ class SqliteDatastore():
         assert type(property_uri) == URIRef
 
         # Ensure property exists
-        if not self._graph[property_uri:RDF.type:OWL.DatatypeProperty]:
+        if not next((i for i in self._graph[property_uri:RDF.type:]
+            if  i in [OWL.DatatypeProperty, OWL.ObjectProperty]), None):
             raise InvalidPropertyError(f'Property does not exist: {property_uri}')
 
         label = str(self._get_label(property_uri) or "")
@@ -268,6 +270,9 @@ class SqliteDatastore():
 
 
     def _get_type(self, type_uri) -> LtpType:
+        """
+        Returns an LtpType object.
+        """
 
         owl_t = (type_uri, RDF.type, OWL.Class)
         rdfs_t = (type_uri, RDF.type, RDFS.Class)
@@ -287,6 +292,21 @@ class SqliteDatastore():
                 type_id=type_uri.partition(self.namespace)[2],
                 namespace=self.namespace,
                 )
+
+
+    def get_properties_for_type(self, type_id, recursive=True):
+        return self._get_properties_for_type(self.namespace.term(type_id))
+
+
+    def _get_properties_for_type(self, type_uri) -> List[URIRef]:
+        """
+        Return a list of URIs which are valid for a given type
+        """
+        properties = []
+        for uri in self._graph[:RDFS.domain:type_uri]:
+            properties.append(self._get_property(uri))
+
+        return properties
 
 
     def get_type(self, name):

@@ -18,7 +18,7 @@ class PropertyValueSchema(Schema):
     data_type = fields.String()
 
 class PropertySchema(Schema):
-    id = fields.String()
+    property_id = fields.String()
     name = fields.String()
     description = fields.String()
     data_type = fields.String()

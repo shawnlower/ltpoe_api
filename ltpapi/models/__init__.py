@@ -29,15 +29,12 @@ class LtpType():
     def get_uri(self):
         return self.namespace.term(self.type_id)
 
+
 class LtpProperty():
     '''Class for a single "Property" object'''
-    name: str
-    property_id: str = ""
-    value: str = ""
-    datatype: str = ""
-    def __init__(self, name, namespace, id=None, value=None, description=None, datatype=None):
+    def __init__(self, name, namespace, property_id=None, value=None, description=None, datatype=None):
         self.name = name
-        self.id = id
+        self.property_id = id
         self.value = value
         self.namespace = namespace
         self.description = description
