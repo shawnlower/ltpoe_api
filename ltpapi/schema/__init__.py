@@ -6,7 +6,7 @@ class ItemSchema(Schema):
     item_type = fields.String()
 
 class TypeSchema(Schema):
-    id = fields.String()
+    type_id = fields.String()
     name = fields.String()
     description = fields.String()
 
@@ -84,6 +84,7 @@ class GetPropertiesQueryStringSchema(Schema):
 
 class GetItemsQueryStringSchema(Schema):
     max_results = fields.Integer(required=False)
+    item_type_id = fields.String(required=False)
     offset = fields.Integer(required=False)
 
 class GetTypesQueryStringSchema(Schema):

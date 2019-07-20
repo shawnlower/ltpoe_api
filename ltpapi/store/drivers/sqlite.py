@@ -69,7 +69,7 @@ class SqliteDatastore():
         self._graph.parse(filename)
         self._graph.commit()
 
-    def get_items(self, item_type_id: str, max_results=25, offset=0):
+    def get_items(self, item_type_id: str = None, max_results=25, offset=0):
         """
         Return a list of items from the store
 
@@ -81,8 +81,9 @@ class SqliteDatastore():
         @type item_type_id: str
         """
 
+        print("item_type_id", item_type_id)
         if item_type_id:
-            item_type = URIRef(self.config['prefix'] + item_type_id)
+            item_type = self.namespace.term(item_type_id)
             subjects = self._graph.subjects(RDF.type, item_type)
         else:
             all_types = self._get_types(root=OWL.Thing)
