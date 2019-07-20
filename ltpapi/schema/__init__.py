@@ -1,9 +1,9 @@
 from marshmallow import fields, Schema
 
 class ItemSchema(Schema):
-    id = fields.String()
+    item_id = fields.String()
     name = fields.String()
-    itemType = fields.String()
+    item_type = fields.String()
 
 class TypeSchema(Schema):
     id = fields.String()
@@ -15,19 +15,19 @@ class PropertyValueSchema(Schema):
     name = fields.String()
     description = fields.String()
     value = fields.String()
-    datatype = fields.String()
+    data_type = fields.String()
 
 class PropertySchema(Schema):
     id = fields.String()
     name = fields.String()
     description = fields.String()
-    datatype = fields.String()
+    data_type = fields.String()
 
 class CreatePropertySchema(Schema):
     name = fields.String(required=True)
     description = fields.String(required=True)
-    itemtypes = fields.List(fields.String, required=True)
-    datatypes = fields.List(fields.String, required=True)
+    item_types = fields.List(fields.String, required=True)
+    data_types = fields.List(fields.String, required=True)
 
 ##############################################################################
 # Request schemas
@@ -35,7 +35,7 @@ class CreatePropertySchema(Schema):
 
 class CreateItemSchema(Schema):
     name = fields.String(required=True)
-    itemType = fields.String(required=True)
+    item_type = fields.String(required=True)
 
 class CreateTypeSchema(Schema):
     name = fields.String()
@@ -92,7 +92,7 @@ class GetTypesQueryStringSchema(Schema):
 
 # Get a SINGLE item
 class GetItemQueryStringSchema(Schema):
-    itemTypeId = fields.String(required=True)
+    item_type_id = fields.String(required=True)
     all_properties = fields.Boolean(required=False)
 
 # Get a SINGLE type

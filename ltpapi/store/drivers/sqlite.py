@@ -63,7 +63,7 @@ class SqliteDatastore():
         self._graph.parse(filename)
         self._graph.commit()
 
-    def get_items(self, itemTypeId: str, max_results=25, offset=0):
+    def get_items(self, item_type_id: str, max_results=25, offset=0):
         """
         Return a list of items from the store
 
@@ -71,12 +71,12 @@ class SqliteDatastore():
         @type max_results: int
         @param offset: For pagination, the start of the results
         @type offset: int
-        @param itemTypeId: The local ID of the type, e.g. 'Book'
-        @type itemTypeId: str
+        @param item_type_id: The local ID of the type, e.g. 'Book'
+        @type item_type_id: str
         """
 
-        if itemTypeId:
-            item_type = URIRef(self.config['prefix'] + itemTypeId)
+        if item_type_id:
+            item_type = URIRef(self.config['prefix'] + item_type_id)
             subjects = self._graph.subjects(RDF.type, item_type)
         else:
             all_types = self._graph.transitive_subjects(RDFS.subClassOf, OWL['Thing'])
@@ -309,7 +309,7 @@ class SqliteDatastore():
                 item_id=item_id,
                 name=properties[RDFS.label],
                 created=properties[ns.created],
-                itemType=properties[RDF.type],
+                item_type=properties[RDF.type],
             )
         except KeyError as e:
             #log.warning("Invalid item in DB: item={}. Error: {}".format(
@@ -329,19 +329,19 @@ class SqliteDatastore():
         # properties is a dict() e.g.:
         # { ns.created: <rdflib.term.Literal>, ...}
         properties = dict(self._graph[ns[item_id]])
-
         try:
+            item_type = properties[RDF.type].partition(self.config['prefix'])[2]
             item = LtpItem(
                 item_id=item_id,
                 name=properties[RDFS.label],
                 created=properties[ns.created],
-                itemType=properties[RDF.type],
+                item_type=item_type,
             )
         except KeyError as e:
-            #log.warning("Invalid item in DB: item={}. Error: {}".format(
-            #    item_id,
-            #    str(e)
-            #))
+            log.warning("Invalid item in DB: item={}. Error: {}".format(
+                item_id,
+                str(e)
+            ))
             return None
 
         return item
