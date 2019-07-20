@@ -65,6 +65,7 @@ class GetItemsResponseSchema(Schema):
 
 class GetItemResponseSchema(Schema):
     item_id = fields.String()
+    item_type = fields.String()
     properties = fields.Dict()
     num_properties = fields.Integer()
 

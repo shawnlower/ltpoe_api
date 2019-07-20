@@ -199,6 +199,7 @@ def get_item(item_id):
     properties = conn.get_item_properties(item)
 
     return { 'item_id': item_id,
+             'item_type': item.item_type,
              'properties': properties,
     }
 

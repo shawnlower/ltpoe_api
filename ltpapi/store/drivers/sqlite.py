@@ -133,7 +133,6 @@ class SqliteDatastore():
         property_map['name'] = str(property_dict[name_prop])
 
         property_map['created'] = str(property_dict[self.namespace.created])
-        property_map['datatype'] = str(property_dict[RDF.type].partition(self.namespace)[2])
         return property_map
         
 
