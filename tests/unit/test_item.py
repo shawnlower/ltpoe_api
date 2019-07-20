@@ -37,9 +37,10 @@ def client():
         conn = get_connection(app)
         #conn.load('tests/testdata/root-ontology.owl')
         conn.load('tests/testdata/data.rdf')
+
+        print("setup: {} triples loaded.".format(len(conn._graph)))
     app.config['STORE_CREATE'] = 'false'
 
-    print("setup: {} triples loaded.".format(len(conn._graph)))
     yield client
     os.close(db_fd)
     print("teardown")

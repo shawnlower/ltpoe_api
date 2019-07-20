@@ -9,15 +9,7 @@ from ltpapi import create_app
 from ltpapi.models import LtpType
 from ltpapi.store import get_connection
 
-@pytest.fixture(scope="module")
-def sqlite_connection():
-    app = create_app()
-    db = NamedTemporaryFile()
-
-    app.config['STORE_TYPE'] = 'sqlite'
-    app.config['STORE_FILE'] = db.name
-    yield get_connection(app)
-    db.close()
+from . import sqlite_connection
 
 class TestSqlite():
 
