@@ -35,7 +35,6 @@ def get_types():
     """
     Get a list of types from the DB
     """
-    prefix = current_app.config['PREFIX']
     conn = get_connection(current_app)
 
     args = rebar.validated_args
@@ -43,12 +42,8 @@ def get_types():
     offset = args.get('offset', 0)
 
     parent =  args.get('parent', None)
-    if parent:
-        parent_iri = prefix + parent
-    else:
-        parent_iri = None
 
-    (types, more) = conn.get_types(max_results, offset, parent_iri)
+    (types, more) = conn.get_types(parent)
     current_app.logger.debug(types)
     return { 'data': types, 'more': more, 'results': len(types) }
 

@@ -22,7 +22,7 @@ class InvalidConfigurationError(SyntaxError):
             self.msg = "Application configuration is invalid"
         else:
             self.msg = msg
-        super(SyntaxError, self).__init__(self.msg)
+        super(InvalidConfigurationError, self).__init__(self.msg)
 
 class NotFoundError(ValueError):
     def __init__(self, msg=None):
@@ -30,4 +30,4 @@ class NotFoundError(ValueError):
             self.msg = "Not found"
         else:
             self.msg = msg
-        super(SyntaxError, self).__init__(self.msg)
+        super(NotFoundError, self).__init__(self.msg)

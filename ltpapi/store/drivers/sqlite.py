@@ -79,7 +79,8 @@ class SqliteDatastore():
             item_type = URIRef(self.config['prefix'] + item_type_id)
             subjects = self._graph.subjects(RDF.type, item_type)
         else:
-            all_types = self._graph.transitive_subjects(RDFS.subClassOf, OWL['Thing'])
+            # all_types = self._graph.transitive_subjects(RDFS.subClassOf, OWL['Thing'])
+            all_types = self._get_types(root=OWL.Thing)
             subjects = []
             for item_type in all_types:
                 subjects += self._graph.subjects(RDF.type, item_type)
@@ -257,16 +258,20 @@ class SqliteDatastore():
 
         return self._get_type(uri)
 
+
     def _get_type(self, type_uri) -> LtpType:
 
-        triple = (type_uri, RDF.type, OWL.Class)
-        if not triple in self._graph:
+        owl_t = (type_uri, RDF.type, OWL.Class)
+        rdfs_t = (type_uri, RDF.type, RDFS.Class)
+        if not owl_t in self._graph or rdfs_t in self._graph:
             raise NotFoundError(f"Type not found: {type_uri}")
 
-        name = next(self._graph[type_uri:RDFS.label])
-        description = next(self._graph[type_uri:RDFS.comment])
-        if not name or not description:
-            raise InvalidTypeError(f'Incomplete type for {type_uri}')
+        name = next(self._graph[type_uri:RDFS.label], None)
+        if not name:
+            #raise InvalidTypeError(f'Incomplete type for {type_uri}')
+            pass
+
+        description = next(self._graph[type_uri:RDFS.comment], "<no description>")
 
         return LtpType(
                 name=name,
@@ -279,8 +284,31 @@ class SqliteDatastore():
     def get_type(self, name):
         self._get_type(self.namespace.term(name))
 
+
+    def get_types(self, root):
+        if root:
+            type_uris = list(self._get_types(self.namespace.term(root)))
+        else:
+            type_uris = list(self._get_types())
+
+        types = []
+        for type_uri in type_uris:
+            try:
+                types.append(self._get_type(type_uri))
+            except NotFoundError:
+                pass
+
+        return (types, False)
+
+
+    def _get_types(self, root=OWL.Thing):
+        t = self._graph.transitive_subjects(RDFS.subClassOf, root)
+        return t
+
+
     def _local_to_uriref(self, localname):
         return URIRef(self._local_to_uri(localname))
+
 
     def _local_to_uri(self, localname):
         return self.config['prefix'] + localname
