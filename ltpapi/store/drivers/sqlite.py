@@ -348,8 +348,12 @@ class SqliteDatastore():
         Return a list of URIs which are valid for a given type
         """
         properties = []
-        for uri in self._graph[:RDFS.domain:type_uri]:
-            properties.append(self._get_property(uri))
+        # Get a list of all parent types
+        trans_uris = list(self._graph.transitive_objects(type_uri, RDFS.subClassOf))
+        for uri in trans_uris:
+            domain_uris = list(self._graph[:RDFS.domain:uri])
+            for domain_uri in domain_uris:
+                properties.append(self._get_property(domain_uri))
 
         return properties
 
