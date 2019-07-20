@@ -84,12 +84,13 @@ class SqliteDatastore():
         print("item_type_id", item_type_id)
         if item_type_id:
             item_type = self.namespace.term(item_type_id)
-            subjects = self._graph.subjects(RDF.type, item_type)
         else:
-            all_types = self._get_types(root=OWL.Thing)
-            subjects = []
-            for item_type in all_types:
-                subjects += self._graph.subjects(RDF.type, item_type)
+            item_type = OWL.Thing
+
+        item_types = self._get_types(item_type)
+        subjects = []
+        for item_type in item_types:
+            subjects += self._graph.subjects(RDF.type, item_type)
 
         items = []
         for entity in subjects:
