@@ -67,7 +67,7 @@ class TestItem():
 
         path = '/api/v1/items'
         data = {
-            'itemType': 'Person',
+            'item_type': 'Person',
             'name': 'Test Name'
         }
         rv = client.post(path, json=data)
@@ -89,7 +89,7 @@ class TestItem():
     #    with app.test_client() as c:
     #        path = '/api/v1/items'
     #        rv = c.post(path,
-    #               json={'itemType': 'Thing', 'name': 'A test thing'})
+    #               json={'item_type': 'Thing', 'name': 'A test thing'})
     #        assert rv.status_code == 500, (rv, rv.data)
 
 
@@ -97,7 +97,7 @@ class TestItem():
         path = '/api/v1/items'
 
         # Missing 'name'
-        rv = client.post(path, json={'itemType': 'Thing'})
+        rv = client.post(path, json={'item_type': 'Thing'})
         assert rv.status_code == 400, (rv.status_code, rv.data)
 
         # Missing 'type'

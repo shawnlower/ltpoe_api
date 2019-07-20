@@ -33,7 +33,8 @@ class SqliteDatastore():
             raise InvalidConfigurationError("Missing 'STORE_FILE' key in config")
 
         db_file = config['file']
-        if do_create and not os.path.exists(db_file):
+        if do_create and not os.path.exists(db_file) \
+            or os.stat(db_file).st_size == 0:
             log.info(f"Creating: {db_file}")
             self._graph.open(db_file, create=True)
         else:
@@ -49,6 +50,9 @@ class SqliteDatastore():
                 override=False)
 
         self._graph.namespace_manager = self._namespace_manager
+
+    def close(self):
+        self._graph.close()
 
     def dump(self, format='n3') -> str:
         """
@@ -143,7 +147,7 @@ class SqliteDatastore():
         assert type(property_uri) == URIRef
 
         # Ensure property exists
-        if not property_uri in self._graph.predicates():
+        if not self._graph[property_uri:RDF.type:OWL.DatatypeProperty]:
             raise InvalidPropertyError(f'Property does not exist: {property_uri}')
 
         label = str(self._get_label(property_uri) or "")
@@ -339,7 +343,7 @@ class SqliteDatastore():
 
         if invalid_props:
             raise InvalidPropertyError(
-                    f"Invalid properties: {str(invalid_props)}")
+                f"Invalid properties: {str(invalid_props)}")
 
         ns = self.namespace
 

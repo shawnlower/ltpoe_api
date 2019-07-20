@@ -65,9 +65,9 @@ def get_items():
     args = rebar.validated_args
     max_results = args.get('max_results', 25)
     offset = args.get('offset', 0)
-    itemTypeId = args.get('itemTypeId')
+    item_type_id = args.get('item_type_id')
 
-    (items, more) = conn.get_items(itemTypeId)
+    (items, more) = conn.get_items(item_type_id)
     current_app.logger.debug(items)
     return { 'data': items, 'more': more, 'results': len(items) }
 
@@ -173,9 +173,9 @@ def create_item():
     conn = get_connection(current_app)
 
     try:
-        item = conn.create_item(body['name'], body['itemType'])
+        item = conn.create_item(body['name'], body['item_type'])
     except Exception as e:
-        raise err.InternalError()
+        raise err.InternalError(str(e))
 
     return {'item': item}, 201
 

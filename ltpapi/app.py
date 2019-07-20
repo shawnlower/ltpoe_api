@@ -16,6 +16,13 @@ def create_app(rebar):
 
     init_db(app)
 
+    @app.teardown_appcontext
+    def close_connection(exception):
+        conn = getattr(g, 'conn', None)
+        print("Closing connection to ", conn)
+        if conn is not None:
+            conn.close()
+
     app.logger.info(f'Created connection using {app.config["STORE_TYPE"]}')
 
     return app
