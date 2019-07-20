@@ -194,6 +194,7 @@ def get_item(id):
     Get a single Item from the DB
     """
 
+    conn = get_connection(current_app)
     item = conn.get_item(id)
 
     if not item:
@@ -201,9 +202,9 @@ def get_item(id):
 
     properties = conn.get_item_properties(item)
 
-    return { 'metadata': item,
+    return { 'item_id': id,
              'properties': properties,
-             'num_properties': len(properties) }
+    }
 
     # Errors are converted to appropriate HTTP errors
     # raise errors.Forbidden()

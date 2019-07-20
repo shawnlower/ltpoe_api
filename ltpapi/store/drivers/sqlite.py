@@ -112,6 +112,25 @@ class SqliteDatastore():
         """
         pass
 
+    def get_item_properties(self, item: LtpItem):
+        """
+        Return all properties for a given item
+        """
+        property_map = {}
+
+        property_dict = dict(self._graph.predicate_objects(
+            self._local_to_uriref(item.item_id)))
+
+        # Get first of RDFS.label or LTP.name
+        name_prop = next(i for i in property_dict
+                if i in [RDFS.label, self.namespace.name])
+        property_map['name'] = str(property_dict[name_prop])
+
+        property_map['created'] = str(property_dict[self.namespace.created])
+        property_map['datatype'] = str(property_dict[RDF.type].partition(self.namespace)[2])
+        return property_map
+        
+
     def _get_property(self, property_uri: "URIRef") -> LtpProperty:
         """
         Return a single property from the store
@@ -123,12 +142,11 @@ class SqliteDatastore():
         assert type(property_uri) == URIRef
 
         # Ensure property exists
-        t = (property_uri, RDF.type, OWL.DatatypeProperty)
-        if not t in self._graph:
-            raise InvalidPropertyError(f'Property does not exist: {property_id}')
+        if not property_uri in self._graph.predicates():
+            raise InvalidPropertyError(f'Property does not exist: {property_uri}')
 
-        label = str(self._get_label(property_uri))
-        desc = str(self._get_description(property_uri))
+        label = str(self._get_label(property_uri) or "")
+        desc = str(self._get_description(property_uri) or "")
         return LtpProperty(name=label, description=desc)
 
 
