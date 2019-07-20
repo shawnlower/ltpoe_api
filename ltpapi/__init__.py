@@ -72,6 +72,23 @@ def get_items():
     return { 'data': items, 'more': more, 'results': len(items) }
 
 @registry.handles(
+    rule='/properties/<property_id>',
+    method='GET',
+    marshal_schema=GetPropertyResponseSchema(),
+)
+def get_property(property_id):
+    """
+    Get a list of types from the DB
+    """
+    conn = get_connection(current_app)
+
+    prop = conn.get_property(property_id)
+    return {
+        'data': prop
+    }
+
+
+@registry.handles(
     rule='/properties/',
     method='GET',
     query_string_schema=GetPropertiesQueryStringSchema(),
@@ -82,6 +99,7 @@ def get_properties():
     Get a list of types from the DB
     """
     args = rebar.validated_args
+    conn = get_connection(current_app)
     max_results = args.get('max_results', 25)
     offset = args.get('offset', 0)
     all_properties = args.get('all_properties')

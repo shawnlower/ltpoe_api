@@ -32,13 +32,16 @@ class LtpType():
 
 class LtpProperty():
     '''Class for a single "Property" object'''
-    def __init__(self, name, namespace, property_id=None, value=None, description=None, datatype=None):
+    def __init__(self, name, namespace, property_id=None, value=None, description=None,
+            datatype=None, property_range=None, property_domain=None):
         self.name = name
         self.property_id = id
         self.value = value
         self.namespace = namespace
         self.description = description
         self.datatype = datatype
+        self.property_range = property_range
+        self.property_domain = property_domain
 
     def get_uri(self):
         return self.namespace.term(self.property_id)

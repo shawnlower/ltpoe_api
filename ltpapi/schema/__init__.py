@@ -22,6 +22,9 @@ class PropertySchema(Schema):
     name = fields.String()
     description = fields.String()
     data_type = fields.String()
+    property_range = fields.List(fields.String)
+    property_domain = fields.List(fields.String)
+
 
 class CreatePropertySchema(Schema):
     name = fields.String(required=True)
@@ -73,6 +76,9 @@ class GetPropertiesResponseSchema(Schema):
     metadata = fields.Nested(PropertySchema)
     data = fields.Nested(PropertySchema, many=True)
     num_properties = fields.Integer()
+
+class GetPropertyResponseSchema(Schema):
+    data = fields.Nested(PropertySchema)
 
 ##############################################################################
 # Query strings

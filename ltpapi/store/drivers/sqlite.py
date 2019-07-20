@@ -5,7 +5,7 @@ import time
 from typing import List
 import uuid
 
-from rdflib import ConjunctiveGraph, Graph, RDF, RDFS, OWL
+from rdflib import ConjunctiveGraph, Graph, RDF, RDFS, OWL, XSD
 from rdflib import Variable, URIRef, Literal
 from rdflib.namespace import NamespaceManager, Namespace
 
@@ -155,8 +155,32 @@ class SqliteDatastore():
 
         label = str(self._get_label(property_uri) or "")
         desc = str(self._get_description(property_uri) or "")
-        prop = LtpProperty(label, self.namespace, description=desc)
+
+        # Get range and domain
+        prop_range = []
+        for range_item in self._graph.objects(property_uri, RDFS.range):
+            range_id = range_item.partition(self.namespace)[2]
+            if range_id:
+                prop_range.append(range_id)
+            elif range_item == XSD.string:
+                prop_range.append('string')
+            elif range_item == XSD.date:
+                prop_range.append('date')
+            else:
+                log.warning(f"Ignoring out-of-namespace range item {range_item}")
+
+        prop_domain = []
+        for domain_item in self._graph.objects(property_uri, RDFS.domain):
+            domain_id = domain_item.partition(self.namespace)[2]
+            if domain_id:
+                prop_domain.append(domain_id)
+            else:
+                log.warning(f"Ignoring out-of-namespace domain item {domain_item}")
+
+        prop = LtpProperty(label, self.namespace, description=desc,
+            property_range=prop_range, property_domain=prop_domain)
         prop.property_id = property_uri.partition(self.namespace)[2]
+
         return prop
 
 
@@ -294,6 +318,26 @@ class SqliteDatastore():
                 namespace=self.namespace,
                 )
 
+
+    def get_properties(self, max_results=0, offset=0):
+        """
+        TODO: is this even necessary? Just use get_properties_for_type?
+        """
+        log.warning("Ignoring max_results and offset (pagination unimplemented)")
+        # Return all properties that we find w/ valid IDs
+        properties = filter(lambda i: i.property_id,
+            map(self._get_property, self._get_properties()))
+        return [list(properties), False]
+
+
+    def _get_properties(self) -> List[URIRef]:
+        """
+        Return a list of property URIs
+        """
+        properties = list(self._graph[:RDF.type:OWL.DatatypeProperty]) + \
+                     list(self._graph[:RDF.type:OWL.ObjectProperty])
+
+        return properties
 
     def get_properties_for_type(self, type_id, recursive=True):
         return self._get_properties_for_type(self.namespace.term(type_id))
