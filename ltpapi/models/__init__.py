@@ -32,15 +32,19 @@ class LtpType():
 class LtpProperty():
     '''Class for a single "Property" object'''
     name: str
-    id: str = ""
+    property_id: str = ""
     value: str = ""
     datatype: str = ""
-    def __init__(self, name, id=None, value=None, description=None, datatype=None):
+    def __init__(self, name, namespace, id=None, value=None, description=None, datatype=None):
         self.name = name
         self.id = id
         self.value = value
+        self.namespace = namespace
         self.description = description
         self.datatype = datatype
+
+    def get_uri(self):
+        return self.namespace.term(self.property_id)
 
     def validate(self):
         """Ensure the property is complete and consistent.

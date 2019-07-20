@@ -173,31 +173,31 @@ def create_item():
     conn = get_connection(current_app)
 
     try:
-        item = conn.create_item(body['name'], body['item_type'])
+        item = conn.create_item(body.pop('name'), body['item_type'])
     except Exception as e:
         raise err.InternalError(str(e))
 
     return {'item': item}, 201
 
 @registry.handles(
-        rule='/items/<id>',
+        rule='/items/<item_id>',
         method='GET',
         marshal_schema=GetItemResponseSchema(),
 )
-def get_item(id):
+def get_item(item_id):
     """
     Get a single Item from the DB
     """
 
     conn = get_connection(current_app)
-    item = conn.get_item(id)
+    item = conn.get_item(item_id)
 
     if not item:
         raise err.NotFound()
 
     properties = conn.get_item_properties(item)
 
-    return { 'item_id': id,
+    return { 'item_id': item_id,
              'properties': properties,
     }
 

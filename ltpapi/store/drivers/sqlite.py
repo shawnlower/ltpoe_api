@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import time
 import uuid
 
@@ -83,7 +84,6 @@ class SqliteDatastore():
             item_type = URIRef(self.config['prefix'] + item_type_id)
             subjects = self._graph.subjects(RDF.type, item_type)
         else:
-            # all_types = self._graph.transitive_subjects(RDFS.subClassOf, OWL['Thing'])
             all_types = self._get_types(root=OWL.Thing)
             subjects = []
             for item_type in all_types:
@@ -152,7 +152,9 @@ class SqliteDatastore():
 
         label = str(self._get_label(property_uri) or "")
         desc = str(self._get_description(property_uri) or "")
-        return LtpProperty(name=label, description=desc)
+        prop = LtpProperty(label, self.namespace, description=desc)
+        prop.property_id = property_uri.partition(self.namespace)[2]
+        return prop
 
 
     def _get_description(self, uri):
@@ -215,6 +217,7 @@ class SqliteDatastore():
                 found = True
                 break
 
+        self._graph.commit()
         return uriref if found else False
 
 
@@ -260,6 +263,7 @@ class SqliteDatastore():
         for statement in statements:
             self._graph.add(statement)
 
+        self._graph.commit()
         return self._get_type(uri)
 
 
@@ -286,7 +290,7 @@ class SqliteDatastore():
 
 
     def get_type(self, name):
-        self._get_type(self.namespace.term(name))
+        return self._get_type(self.namespace.term(name))
 
 
     def get_types(self, root):
@@ -332,14 +336,15 @@ class SqliteDatastore():
         if 'name' in properties and properties['name'] != name:
             raise Exception("Invalid request. name passed multiple times")
 
+        if not self.get_type(item_type):
+            raise Exception(f"Invalid type: {item_type}")
+
         # name is actually just another property
         properties['name'] = name
 
         # Ensure all passed properties are valid
-        invalid_props = []
-        for prop_id in properties:
-            prop = self.get_property(prop_id)
-
+        invalid_props = [ prop for prop in properties if not
+            self.get_property(prop)]
 
         if invalid_props:
             raise InvalidPropertyError(
@@ -348,41 +353,51 @@ class SqliteDatastore():
         ns = self.namespace
 
         norm_name = normalize_item_id(name)
-        item_id = self._reserve_iri(self.config['prefix'] + norm_name)
+        item_uri = self._reserve_iri(self.config['prefix'] + norm_name)
 
-        # properties is a dict() e.g.:
-        # { ns.created: <rdflib.term.Literal>, ...}
-        properties = dict(self._graph[ns[item_id]])
-
-        try:
-            item = LtpItem(
-                item_id=item_id,
-                name=properties[RDFS.label],
-                created=properties[ns.created],
-                item_type=properties[RDF.type],
-            )
-        except KeyError as e:
-            #log.warning("Invalid item in DB: item={}. Error: {}".format(
-            #    item_id,
-            #    str(e)
-            #))
+        if not item_uri:
             return None
 
+        # Add the type
+        type_uri = URIRef(self.get_type(item_type).get_uri())
+        self._graph.add((item_uri, RDF.type, type_uri))
+        self._graph.add((item_uri, RDFS.label, Literal(name)))
+
+        for prop_id in properties:
+            prop_uri = URIRef(self.get_property(prop_id).get_uri())
+            _value = properties[prop_id]
+            if type(_value) == URIRef or re.match('^https?://', _value):
+                value = _value
+            else:
+                value = Literal(_value)
+            self._graph.add((item_uri, prop_uri, value))
+
+        item = self._get_item(item_uri)
+        self._graph.commit()
         return item
+
 
     def get_item(self, item_id: str):
         """
         Return a single item definition.
         """
-        ns = self.namespace
 
+        return self._get_item(self.namespace[item_id])
+
+
+    def _get_item(self, item_id: str):
+        """
+        Return a single item definition.
+        """
+
+        ns = self.namespace
         # properties is a dict() e.g.:
         # { ns.created: <rdflib.term.Literal>, ...}
-        properties = dict(self._graph[ns[item_id]])
+        properties = dict(self._graph[item_id])
         try:
             item_type = properties[RDF.type].partition(self.config['prefix'])[2]
             item = LtpItem(
-                item_id=item_id,
+                item_id=self._uri_to_local(item_id),
                 name=properties[RDFS.label],
                 created=properties[ns.created],
                 item_type=item_type,
