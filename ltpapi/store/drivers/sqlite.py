@@ -60,7 +60,7 @@ class SqliteDatastore():
         """
         Dump the data from the store
         """
-        return self._graph.serialize(format='n3')
+        return self._graph.serialize(format='n3').decode('utf-8')
 
     def load(self, filename):
         """

@@ -4,6 +4,7 @@ from flask import current_app
 
 from . import get_connection
 
+
 @click.command('load', help='Initialize a new store')
 @click.option(
     '-f',
@@ -17,9 +18,20 @@ def load(file):
     click.echo(f'Loading data from {file}.')
     conn.load(file)
 
-@click.command(help='Dump store to stdout in turtle format')
-def dump():
-    click.echo(f'Dumping store.')
+
+@click.option(
+    '-f',
+    '--file',
+    type=click.File('w'),
+    required=True,
+)
+@click.command(help='Dump store to a file in turtle format')
+@with_appcontext
+def dump(file):
+    conn = get_connection(current_app)
+    click.echo(f'Dumping store to {file.name}')
+    file.write(conn.dump())
+
 
 @click.command(
     help='Dump flask config to stdout in newline-separated KEY=VALUE format')
