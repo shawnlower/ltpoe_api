@@ -39,6 +39,7 @@ class SqliteDatastore():
             or os.stat(db_file).st_size == 0:
             log.info(f"Creating: {db_file}")
             self._graph.open(db_file, create=True)
+            self._graph.commit()
         else:
             log.info(f"Using existing DB: {db_file}")
             self._graph.open(db_file, create=False)
