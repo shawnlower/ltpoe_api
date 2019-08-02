@@ -41,6 +41,7 @@ def get_connection(app):
 def init_db(app):
     log.info("Initializing DB")
 
+    return # test
     from . import commands  # prevent circular reference
 
     cmds = [v for v in commands.__dict__.values() if type(v) == click.Command]

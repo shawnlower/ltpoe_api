@@ -60,3 +60,4 @@ def dump(file):
 def dump_config():
     click.echo('\n'.join([ f'{k}="{v}"' for k,v in current_app.config.items()]))
 
+

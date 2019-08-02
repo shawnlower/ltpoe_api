@@ -1,5 +1,6 @@
 from datetime import timedelta
 from functools import update_wrapper
+import os
 from urllib.parse import unquote
 
 from flask import Flask, current_app, make_response, request, current_app, g
@@ -12,9 +13,6 @@ from .schema import *
 # Item models
 from .models import LtpType, LtpItem, LtpProperty
 from . import exceptions as err
-
-# Factory
-from .app import create_app as _create_app
 
 # Connectors, e.g. SPARQL-over-HTTP, and SQLite
 from . import store
@@ -229,20 +227,33 @@ if __name__ == '__main__':
     app = create_app()
     app.run()
 
-def create_app(rebar=rebar):
+def create_app(rebar=rebar, config={}):
 
-    app = _create_app(rebar)
+    app = Flask(__name__)
+    rebar.init_app(app)
 
+    if config:
+        app.logger.info(f'Loading config: {config}')
+        app.config.update(config)
+    elif 'APP_CONFIG' in os.environ:
+        app.logger.info(f'Loading config from {os.environ["APP_CONFIG"]}')
+        app.config.from_envvar('APP_CONFIG')
+    else:
+        app.config.from_pyfile('config.py')
+
+    @app.teardown_appcontext
+    def close_connection(exception):
+        conn = getattr(g, 'conn', None)
+        if conn is not None:
+            print("Closing connection to ", conn)
+            conn.close()
+
+    app.logger.info(f'Created connection using {app.config["STORE_TYPE"]}')
     @app.after_request
     def apply_caching(response):
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
         response.headers["Access-Control-Allow-Origin"] = "*"
         return response
-
-    @app.teardown_appcontext
-    def close_db(error):
-        if hasattr(g, 'conn'):
-            current_app.logger.debug(f'Closing connection: {g.conn}')
 
     return app
 
