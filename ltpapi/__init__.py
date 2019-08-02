@@ -16,7 +16,7 @@ from . import exceptions as err
 
 # Connectors, e.g. SPARQL-over-HTTP, and SQLite
 from . import store
-from .store import get_connection
+from .store import get_connection, init_db
 
 rebar = Rebar()
 
@@ -240,6 +240,8 @@ def create_app(rebar=rebar, config={}):
         app.config.from_envvar('APP_CONFIG')
     else:
         app.config.from_pyfile('config.py')
+
+    init_db(app)
 
     @app.teardown_appcontext
     def close_connection(exception):
