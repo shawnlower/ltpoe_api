@@ -100,20 +100,21 @@ class SqliteDatastore():
             item_id = entity.partition(self.config['prefix'])[2]
             item = self.get_item(item_id)
             if item:
-                if 'name' in filter_props:
-                    if str(item.name) != filter_props['name']:
+                _filter_props = dict(filter_props)
+                if 'name' in _filter_props:
+                    if str(item.name) != _filter_props.pop('name'):
                         continue
 
-                if 'item_type' in filter_props:
-                    if item.item_type != filter_props['item_type']:
+                if 'item_type' in _filter_props:
+                    if item.item_type != _filter_props.pop('item_type'):
                         continue
 
-                for prop in filter_props:
+                for prop in _filter_props:
                     if prop == 'name':
                         continue
                     else:
                         log.warning((f"TODO: Not filtering for "
-                                     f"{prop}={filter_props[prop]}"))
+                                     f"{prop}={_filter_props[prop]}"))
                 items.append(item)
 
         return (items, False)
