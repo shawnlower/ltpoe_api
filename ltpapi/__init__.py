@@ -65,7 +65,12 @@ def get_items():
     offset = args.get('offset', 0)
     item_type_id = args.get('item_type_id')
 
-    (items, more) = conn.get_items(item_type_id)
+    # We assume that any extra keys that aren't part of the official API are
+    # properties on the item that we want to filter on.
+    filter_props = { k: request.args.get(k) for k in request.args.keys()
+        if not k in args.keys()}
+
+    (items, more) = conn.get_items(item_type_id, filter_props=filter_props)
     current_app.logger.debug(items)
     return { 'data': items, 'more': more, 'results': len(items) }
 

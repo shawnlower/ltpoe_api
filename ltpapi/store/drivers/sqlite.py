@@ -70,7 +70,8 @@ class SqliteDatastore():
         self._graph.parse(filename)
         self._graph.commit()
 
-    def get_items(self, item_type_id: str = None, max_results=25, offset=0):
+    def get_items(self, item_type_id: str = None, max_results=25, offset=0,
+        filter_props={}):
         """
         Return a list of items from the store
 
@@ -99,6 +100,20 @@ class SqliteDatastore():
             item_id = entity.partition(self.config['prefix'])[2]
             item = self.get_item(item_id)
             if item:
+                if 'name' in filter_props:
+                    if str(item.name) != filter_props['name']:
+                        continue
+
+                if 'item_type' in filter_props:
+                    if item.item_type != filter_props['item_type']:
+                        continue
+
+                for prop in filter_props:
+                    if prop == 'name':
+                        continue
+                    else:
+                        log.warning((f"TODO: Not filtering for "
+                                     f"{prop}={filter_props[prop]}"))
                 items.append(item)
 
         return (items, False)
