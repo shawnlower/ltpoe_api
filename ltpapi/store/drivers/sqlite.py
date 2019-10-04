@@ -308,7 +308,8 @@ class SqliteDatastore():
             self._graph.add(statement)
 
         self._graph.commit()
-        return self._get_type(uri)
+        t = self._get_type(uri)
+        return t
 
 
     def _get_type(self, type_uri) -> LtpType:

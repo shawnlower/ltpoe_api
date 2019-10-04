@@ -154,8 +154,8 @@ def create_type():
     t = conn.create_type(**body)
     # Generate URI from prefix
     type_response = {
-        name: t.name,
-        description: t.description,
+        'name': t.name,
+        'description': t.description,
     }
     return type_response, 201
 

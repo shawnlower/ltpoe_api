@@ -7,7 +7,13 @@ def normalize_iri(iri: str):
         return iri
 
 def normalize_type_id(name: str):
-    name = name.title().replace(' ', '-')
+    """
+    Rules enforced for a normalized name:
+    - Consists only of the letters a-z, plus a period.
+    - Each word begins with a capital letter
+    - Does not begin or end with a period
+    """
+    name = ''.join([word.title() for word in name.split()])
     name = ''.join([c for c in name if c in ['.'] + list(string.ascii_letters)])
     name=name.lstrip('.').rstrip('.')
     return name
