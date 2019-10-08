@@ -71,7 +71,9 @@ def get_items():
         if not k in args.keys()}
 
     (items, more) = conn.get_items(item_type_id, filter_props=filter_props)
-    current_app.logger.debug(items)
+    current_app.logger.debug(
+        f'get_items got {len(items)} items from store: \n' \
+        + '\n - '.join([str(i) for i in  items]))
     return { 'data': items, 'more': more, 'results': len(items) }
 
 @registry.handles(
@@ -138,6 +140,39 @@ def get_type(name):
 
     # Errors are converted to appropriate HTTP errors
     # raise errors.Forbidden()
+
+
+@registry.handles(
+    rule='/mappings/<resource>',
+    method='GET',
+    marshal_schema = {
+        200: GetMappingsResponseSchema(),
+    },
+)
+def get_mappings(resource):
+    """
+    Get a list of types from the DB
+    """
+    conn = get_connection(current_app)
+    return {
+        'resource': resource,
+        'results': 1,
+        'mappings': [{
+                'ontology': 'schema.org',
+                'uri': 'http://schema.org/Person',
+                'rdf_type': 'abc',
+                'name': 'Person',
+                'mapping_type': 'exactMatch',
+            }, {
+                'ontology': 'wordnet.org',
+                'ontology_uri': 'abc',
+                'rdf_type': 'abc',
+                'name': 'abc',
+                'mapping_type': 'exactMatch',
+                'description': 'abc',
+        }]
+    }
+
 
 @registry.handles(
     rule='/types',
@@ -263,4 +298,5 @@ def create_app(rebar=rebar, config={}):
         return response
 
     return app
+
 

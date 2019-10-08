@@ -5,6 +5,17 @@ class ItemSchema(Schema):
     name = fields.String()
     item_type = fields.String()
 
+class MappingSchema(Schema):
+    # e.g. schema.org/
+    ontology = fields.String()
+    # e.g. http://schema.org/
+    uri = fields.String()
+    # Property or Class
+    rdf_type = fields.String()
+    name = fields.String()
+    # exactMatch, related, relatedProperty
+    mapping_type = fields.String()
+
 class TypeSchema(Schema):
     type_id = fields.String()
     name = fields.String()
@@ -50,6 +61,15 @@ class CreateTypeSchema(Schema):
 
 class CreateItemResponseSchema(Schema):
     item = fields.Nested(ItemSchema)
+
+class GetMappingsResponseSchema(Schema):
+    """
+    Response for a 'mapping'
+    """
+    resource = fields.String()
+    mappings = fields.Nested(MappingSchema, many=True)
+    # more = fields.Boolean()
+    results = fields.Integer()
 
 class GetTypesResponseSchema(Schema):
     data = fields.Nested(TypeSchema, many=True)
