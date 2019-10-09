@@ -1,25 +1,30 @@
-class LtpItem():
-    '''Class for a single "Item" object'''
+from ..exceptions import InvalidPropertyError
+
+class LtpItem:
+    """Class for a single "Item" object"""
     name: str
     item_type: str
     item_id: str = ""
     created: str = ""
     properties = []
+
     def __init__(self, name, item_type, item_id=None, created=None, 
-            namespace=None):
+                 namespace=None):
         self.name = name
         self.item_id = item_id
         self.item_type = item_type
         self.created = created
 
-class LtpType():
-    '''Class for a single "Type" object'''
+
+class LtpType:
+    """Class for a single "Type" object"""
     name: str
     description: str = ""
     created: str = ""
     properties = []
+
     def __init__(self, name, description, namespace, created=None,
-            type_id=None):
+                 type_id=None):
         self.name = name
         self.namespace = namespace
         self.description = description
@@ -31,9 +36,9 @@ class LtpType():
 
 
 class LtpProperty():
-    '''Class for a single "Property" object'''
+    """Class for a single "Property" object"""
     def __init__(self, name, namespace, property_id=None, value=None, description=None,
-            datatype=None, property_range=None, property_domain=None):
+                 datatype=None, property_range=None, property_domain=None):
         self.name = name
         self.property_id = id
         self.value = value
@@ -55,10 +60,8 @@ class LtpProperty():
         - id exists
         """
         required = ['name', 'description']
-        missing  = [k for k in required if not getattr(self, k)]
+        missing = [k for k in required if not getattr(self, k)]
         if missing:
-            raise err.InvalidProperty('Missing keys {}'.format(str(missing)))
+            raise InvalidPropertyError('Missing keys {}'.format(str(missing)))
 
-        raise err.NotImplemented
-
-
+        raise NotImplemented

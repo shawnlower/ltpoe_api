@@ -17,29 +17,29 @@ from ltpapi.exceptions import *
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
 log = logging.getLogger()
 
-class SqliteDatastore():
+class SqliteDatastore:
 
     def __init__(self, config):
         self.config = config
 
         # Whether to create a new file for the backing store
-        if not 'create' in self.config:
+        if 'create' not in self.config:
             self.config['create'] = "true"
 
         do_create = self.config.get('create').lower() == 'true'
 
         self._graph = ConjunctiveGraph('SQLite',
-                     identifier=config['prefix'])
+                                       identifier=config['prefix'])
 
-        if not 'file' in config:
+        if 'file' not in config:
             raise InvalidConfigurationError("Missing 'STORE_FILE' key in config")
 
         db_file = config['file']
         if do_create and not os.path.exists(db_file) \
             or os.stat(db_file).st_size == 0:
-            log.info(f"Creating: {db_file}")
-            self._graph.open(db_file, create=True)
-            self._graph.commit()
+                log.info(f"Creating: {db_file}")
+                self._graph.open(db_file, create=True)
+                self._graph.commit()
         else:
             log.info(f"Using existing DB: {db_file}")
             self._graph.open(db_file, create=False)
@@ -71,7 +71,7 @@ class SqliteDatastore():
         self._graph.commit()
 
     def get_items(self, item_type_id: str = None, max_results=25, offset=0,
-        filter_props={}):
+                  filter_props={}):
         """
         Return a list of items from the store
 
@@ -81,6 +81,8 @@ class SqliteDatastore():
         @type offset: int
         @param item_type_id: The local ID of the type, e.g. 'Book'
         @type item_type_id: str
+        @param filter_props: A dictionary containing properties to filter on
+        @type filter_props: dict
         """
 
         print("item_type_id", item_type_id)
@@ -117,11 +119,10 @@ class SqliteDatastore():
                                      f"{prop}={_filter_props[prop]}"))
                 items.append(item)
 
-        return (items, False)
-
+        return items, False
 
     def _create_property(self, name: str, description: str,
-            domain=[], prop_range=[]) -> LtpProperty:
+                         domain=[], prop_range=[]) -> LtpProperty:
         """
         @param name: A name for the property
         @param description: A description of the property
@@ -148,12 +149,11 @@ class SqliteDatastore():
 
         # Get first of RDFS.label or LTP.name
         name_prop = next(i for i in property_dict
-                if i in [RDFS.label, self.namespace.name])
+                         if i in [RDFS.label, self.namespace.name])
         property_map['name'] = str(property_dict[name_prop])
 
         property_map['created'] = str(property_dict[self.namespace.created])
         return property_map
-        
 
     def _get_property(self, property_uri: "URIRef") -> LtpProperty:
         """
@@ -200,7 +200,6 @@ class SqliteDatastore():
 
         return prop
 
-
     def _get_description(self, uri):
         values = list(self._graph[uri:RDFS.comment])
         if values:
@@ -208,14 +207,12 @@ class SqliteDatastore():
         else:
             return None
 
-
     def _get_label(self, uri):
         values = list(self._graph[uri:RDFS.label])
         if values:
             return values[0]
         else:
             return None
-
 
     def _uri_to_local(self, uri):
         return uri.partition(self.config['prefix'])[2]
@@ -264,9 +261,8 @@ class SqliteDatastore():
         self._graph.commit()
         return uriref if found else False
 
-
     def create_type(self, name: str, description: str,
-            parent_name=None) -> LtpType:
+                    parent_name=None) -> LtpType:
         """
         @param name: A name for the type
         @param description: A description of the type
@@ -311,7 +307,6 @@ class SqliteDatastore():
         t = self._get_type(uri)
         return t
 
-
     def _get_type(self, type_uri) -> LtpType:
         """
         Returns an LtpType object.
@@ -336,7 +331,6 @@ class SqliteDatastore():
                 namespace=self.namespace,
                 )
 
-
     def get_properties(self, max_results=0, offset=0):
         """
         TODO: is this even necessary? Just use get_properties_for_type?
@@ -346,7 +340,6 @@ class SqliteDatastore():
         properties = filter(lambda i: i.property_id,
             map(self._get_property, self._get_properties()))
         return [list(properties), False]
-
 
     def _get_properties(self) -> List[URIRef]:
         """
@@ -359,7 +352,6 @@ class SqliteDatastore():
 
     def get_properties_for_type(self, type_id, recursive=True):
         return self._get_properties_for_type(self.namespace.term(type_id))
-
 
     def _get_properties_for_type(self, type_uri) -> List[URIRef]:
         """
@@ -375,10 +367,8 @@ class SqliteDatastore():
 
         return properties
 
-
     def get_type(self, name):
         return self._get_type(self.namespace.term(name))
-
 
     def get_types(self, root):
         if root:
@@ -395,19 +385,15 @@ class SqliteDatastore():
 
         return (types, False)
 
-
     def _get_types(self, root=OWL.Thing):
         t = self._graph.transitive_subjects(RDFS.subClassOf, root)
         return t
 
-
     def _local_to_uriref(self, localname):
         return URIRef(self._local_to_uri(localname))
 
-
     def _local_to_uri(self, localname):
         return self.config['prefix'] + localname
-
 
     def create_item(self, name: str, item_type: str, properties={}) -> LtpType:
         """
@@ -431,7 +417,7 @@ class SqliteDatastore():
 
         # Ensure all passed properties are valid
         invalid_props = [ prop for prop in properties if not
-            self.get_property(prop)]
+                          self.get_property(prop)]
 
         if invalid_props:
             raise InvalidPropertyError(
@@ -463,14 +449,12 @@ class SqliteDatastore():
         self._graph.commit()
         return item
 
-
     def get_item(self, item_id: str):
         """
         Return a single item definition.
         """
 
         return self._get_item(self.namespace[item_id])
-
 
     def _get_item(self, item_id: str):
         """
