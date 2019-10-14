@@ -11,7 +11,7 @@ from rdflib.namespace import NamespaceManager, Namespace
 
 from ltpapi.models import LtpItem, LtpType, LtpProperty
 from ..utils import normalize_iri, normalize_type_id, normalize_item_id
-from ltpapi.exceptions import *
+import ltpapi.exceptions as err
 
 # Setup a logger for use outside the flask context
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
@@ -32,7 +32,7 @@ class SqliteDatastore:
                                        identifier=config['prefix'])
 
         if 'file' not in config:
-            raise InvalidConfigurationError("Missing 'STORE_FILE' key in config")
+            raise err.InvalidConfigurationError("Missing 'STORE_FILE' key in config")
 
         db_file = config['file']
         if do_create and not os.path.exists(db_file) \
@@ -121,22 +121,67 @@ class SqliteDatastore:
 
         return items, False
 
-    def _create_property(self, name: str, description: str,
-                         domain=[], prop_range=[]) -> LtpProperty:
+    def create_property(self, name: str, description: str,
+                         item_types, data_types) -> LtpProperty:
         """
         @param name: A name for the property
         @param description: A description of the property
-        @param domain: A list of types for which the property applies
-        @param prop_range: A list of types that values of the property can
-                           take
+        @param item_types: The type of items this property applies to. Becomes the RDF 'domain'.
+        @param data_types: The datatype for values of this property. Becomes the RDF 'range'.
 
         Example:
 
-        _create_property('author', 'The author of a CreativeWork',
-                         [ LTP.Book, LTP.Movie ], 
-                         [ LTP.Person ])
+        create_property('author', 'The author of a CreativeWork',
+                         [ "CreativeWork" ],
+                         [ "Person", "string" ])
+
+        Will result in:
+
+        <ltp:author>        a                   <rdfs:property>
+        <ltp:author>        <rdfs:label>        "Author"@en
+        <ltp:author>        <rdfs:comment>      "The author of a CreativeWork"@en
+        <ltp:author>        <rdfs:domain>       <ltp:CreativeWork>
+        <ltp:author>        <rdfs:range>        <ltp:Person>, <ltp:Organization>, <XSD:string>
         """
-        pass
+        
+        try:
+            prop = self.get_property(name)
+            if prop:
+                raise err.AlreadyExistsError
+        except err.NotFoundError:
+            pass
+
+        # Validate all item types to be used for range
+        invalid_types = []
+        for t in item_types:
+            try:
+                _t = self.get_type(t)
+            except err.NotFoundError:
+                invalid_types.append(t)
+
+        if invalid_types:
+            raise err.NotFoundError('Missing type(s): {}'.format(
+                ', '.join(invalid_types)))
+
+        # Validate all data types to be used for domain
+        import pdb; pdb.set_trace()
+        raise Exception(NotImplemented)
+
+        # Add RDFS properties
+        g = self._graph
+        LTP = self.namespace
+
+        g.add((LTP[name], RDF.type, RDF.Property))
+        g.add((LTP[name], RDFS.label, Literal(name)))
+        g.add((LTP[name], RDFS.comment, Literal(description)))
+        g.commit()
+
+        #for r in item_types:
+        #    g.add((LTP[name], RDFS.domain, 
+        #    g.add((LTP[name], RDFS.range, 
+
+        return self.get_property(name)
+
 
     def get_item_properties(self, item: LtpItem):
         """
@@ -160,16 +205,28 @@ class SqliteDatastore:
         Return a single property from the store
 
         @param property_uri: The URIRef of the property, e.g. 'name'
+        @type property_uri: URIRef
         """
         ns = self.namespace
 
         assert type(property_uri) == URIRef
 
         # Ensure property exists
-        if not next((i for i in self._graph[property_uri:RDF.type:]
-            if  i in [OWL.DatatypeProperty, OWL.ObjectProperty]), None):
-            raise InvalidPropertyError(f'Property does not exist: {property_uri}')
+        property_types = [ i for i in self._graph[property_uri:RDF.type:] ]
+        if not property_types:
+            raise err.NotFoundError(f"Property {property_uri} not found.")
 
+        # Ensure property is of a valid type
+        valid = False
+        for t in property_types:
+            if t in [OWL.DatatypeProperty, OWL.ObjectProperty, RDF.Property]:
+                valid = True
+                break
+
+        if not valid:
+            raise err.InvalidPropertyError(f'Missing or invalid : {property_uri}')
+
+        # Get basic name/label and description
         label = str(self._get_label(property_uri) or "")
         desc = str(self._get_description(property_uri) or "")
 
@@ -225,7 +282,6 @@ class SqliteDatastore:
         """
         ns = self.namespace
 
-        # Ensure property exists
         return self._get_property(ns[property_id])
 
     def _reserve_iri(self, iri, auto_suffix_max=0):
@@ -290,7 +346,7 @@ class SqliteDatastore:
                 break
 
         if not uri:
-            raise InvalidTypeError(f"All permutations of {name} taken.")
+            raise err.InvalidTypeError(f"All permutations of {name} taken.")
 
         # Add the statements for a new type
         statements = [
@@ -315,12 +371,11 @@ class SqliteDatastore:
         owl_t = (type_uri, RDF.type, OWL.Class)
         rdfs_t = (type_uri, RDF.type, RDFS.Class)
         if not owl_t in self._graph or rdfs_t in self._graph:
-            raise NotFoundError(f"Type not found: {type_uri}")
+            raise err.NotFoundError(f"Type not found: {type_uri}")
 
         name = next(self._graph[type_uri:RDFS.label], None)
         if not name:
-            #raise InvalidTypeError(f'Incomplete type for {type_uri}')
-            pass
+            raise err.InvalidTypeError(f'Incomplete type for {type_uri}')
 
         description = next(self._graph[type_uri:RDFS.comment], "<no description>")
 
@@ -380,7 +435,7 @@ class SqliteDatastore:
         for type_uri in type_uris:
             try:
                 types.append(self._get_type(type_uri))
-            except NotFoundError:
+            except err.NotFoundError:
                 pass
 
         return (types, False)
@@ -420,7 +475,7 @@ class SqliteDatastore:
                           self.get_property(prop)]
 
         if invalid_props:
-            raise InvalidPropertyError(
+            raise err.InvalidPropertyError(
                 f"Invalid properties: {str(invalid_props)}")
 
         ns = self.namespace

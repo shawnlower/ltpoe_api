@@ -1,5 +1,6 @@
 from ..exceptions import InvalidPropertyError
 
+
 class LtpItem:
     """Class for a single "Item" object"""
     name: str
@@ -35,7 +36,7 @@ class LtpType:
         return self.namespace.term(self.type_id)
 
 
-class LtpProperty():
+class LtpProperty:
     """Class for a single "Property" object"""
     def __init__(self, name, namespace, property_id=None, value=None, description=None,
                  datatype=None, property_range=None, property_domain=None):

@@ -199,23 +199,49 @@ def create_type():
     method='POST',
     request_body_schema=CreatePropertySchema(),
     marshal_schema={
-       201: PropertySchema()
+       201: CreatePropertyResponseSchema(),
+       400: CreatePropertyResponseSchema(),
+       409: CreatePropertyResponseSchema(),
    }
 )
 def create_property():
+    """
+    # Create a new property to be used on items.
+    ---
+    Example:
+    {
+        "name": "author",
+        "description": "The author of a CreativeWork",
+        "item_types" = [ "Book", "Movie" ],
+        "data_types" = [ "Person", "string" ]
+    }
+    """
     body = rebar.validated_body
-    p = LtpProperty(**body)
-    try:
-        conn.create_property(p)
-    except err.InvalidProperty as e:
-        raise err.BadRequest(e.msg)
-    except Exception as e:
-        raise err.BadRequest(str(e))
+    conn = get_connection(current_app)
 
-    raise err.NotImplemented('rats')
+    try:
+        p = conn.create_property(**body)
+    except err.AlreadyExistsError as e:
+        return {
+            'error': {
+                'description': 'Property Already Exists',
+            }
+        }, 409
+    except err.InvalidPropertyError as e:
+        return {
+            'error': {
+                'description': f'Property is invalid: {e.msg}'
+            }
+        }, 400
+    except Exception as e:
+        return {
+            'error': {
+                'description': f'Bad Request: {str(e)}'
+            }
+        }, 400
 
     # Generate URI from prefix
-    return p, 201
+    return { 'prop': p, 'error': {} }, 201
 
 @registry.handles(
     rule='/items',

@@ -1,5 +1,14 @@
 from flask_rebar.errors import *
 
+class AlreadyExistsError(ValueError):
+    def __init__(self, msg=None):
+        if not msg:
+            self.msg = "Resource already exists."
+        else:
+            self.msg = msg
+        super(AlreadyExistsError, self).__init__(self.msg)
+
+
 class InvalidPropertyError(ValueError):
     def __init__(self, msg=None):
         if not msg:
