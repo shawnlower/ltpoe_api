@@ -126,10 +126,11 @@
     <rdfs:label>Ontology Mapping: The State of the Art</rdfs:label>
     <ns1:created>1557226101</ns1:created>
   </rdf:Description>
-  <rdf:Description rdf:about="http://shawnlower.net/o/ontology-mapping-the-state-of-the-art0">
+  <rdf:Description rdf:about="http://shawnlower.net/o/seveneves">
     <rdf:type rdf:resource="http://shawnlower.net/o/Book"/>
-    <rdfs:label>Ontology Mapping: The State of the Art</rdfs:label>
+    <rdfs:label>SevenEves</rdfs:label>
     <ns1:created>1557226166</ns1:created>
+    <ns1:author>Neal Stephenson</ns1:author>
   </rdf:Description>
   <rdf:Description rdf:about="http://shawnlower.net/o/lord-of-the-rings">
     <rdf:type rdf:resource="http://shawnlower.net/o/Book"/>

@@ -1,10 +1,5 @@
 from marshmallow import fields, Schema
 
-class ItemSchema(Schema):
-    item_id = fields.String()
-    name = fields.String()
-    item_type = fields.String()
-
 class MappingSchema(Schema):
     # e.g. schema.org/
     ontology = fields.String()
@@ -15,11 +10,6 @@ class MappingSchema(Schema):
     name = fields.String()
     # exactMatch, related, relatedProperty
     mapping_type = fields.String()
-
-class TypeSchema(Schema):
-    type_id = fields.String()
-    name = fields.String()
-    description = fields.String()
 
 class PropertyValueSchema(Schema):
     id = fields.String()
@@ -35,6 +25,19 @@ class PropertySchema(Schema):
     data_type = fields.String()
     property_range = fields.List(fields.String)
     property_domain = fields.List(fields.String)
+    value = fields.String()
+
+class TypeSchema(Schema):
+    type_id = fields.String()
+    name = fields.String()
+    description = fields.String()
+    properties = fields.Nested(PropertySchema, many=True)
+
+class ItemSchema(Schema):
+    item_id = fields.String()
+    name = fields.String()
+    item_type = fields.String()
+    properties = fields.Nested(PropertySchema, many=True)
 
 
 class CreatePropertySchema(Schema):
@@ -87,10 +90,7 @@ class GetItemsResponseSchema(Schema):
     results = fields.Integer()
 
 class GetItemResponseSchema(Schema):
-    item_id = fields.String()
-    item_type = fields.String()
-    properties = fields.Dict()
-    num_properties = fields.Integer()
+    data = fields.Nested(ItemSchema)
 
 class GetPropertiesResponseSchema(Schema):
     metadata = fields.Nested(PropertySchema)
@@ -110,13 +110,14 @@ class GetPropertiesQueryStringSchema(Schema):
 
 class GetItemsQueryStringSchema(Schema):
     max_results = fields.Integer(required=False)
-    item_type_id = fields.String(required=False)
+    all_properties = fields.Boolean(required=False)
     offset = fields.Integer(required=False)
 
 class GetTypesQueryStringSchema(Schema):
     max_results = fields.Integer(required=False)
     offset = fields.Integer(required=False)
     parent = fields.String(required=False)
+    all_properties = fields.Boolean(required=False)
 
 # Get a SINGLE item
 class GetItemQueryStringSchema(Schema):

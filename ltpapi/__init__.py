@@ -38,10 +38,19 @@ def get_types():
     args = rebar.validated_args
     max_results = args.get('max_results', 25)
     offset = args.get('offset', 0)
+    all_properties = args.get('all_properties', False)
 
     parent =  args.get('parent', None)
 
-    (types, more) = conn.get_types(parent)
+    (base_types, more) = conn.get_types(parent)
+    types = []
+    if all_properties:
+        for t in base_types:
+            t.properties = conn.get_properties_for_type(t.type_id, args.get('all_properties'))
+            types.append(t)
+    else:
+        types = base_types
+
     current_app.logger.debug(types)
     return { 'data': types, 'more': more, 'results': len(types) }
 
@@ -61,6 +70,7 @@ def get_items():
     
     conn = get_connection(current_app)
     args = rebar.validated_args
+    all_properties = args.get('all_properties', True)
     max_results = args.get('max_results', 25)
     offset = args.get('offset', 0)
     item_type_id = args.get('item_type_id')
@@ -107,7 +117,6 @@ def get_properties():
     conn = get_connection(current_app)
     max_results = args.get('max_results', 25)
     offset = args.get('offset', 0)
-    all_properties = args.get('all_properties')
 
     (properties, more) = conn.get_properties(max_results, offset)
     current_app.logger.debug(properties)
@@ -125,6 +134,7 @@ def get_type(name):
     """
     args = rebar.validated_args
     conn = get_connection(current_app)
+    all_properties = args.get('all_properties')
 
     current_app.logger.debug(f'Getting type for name: {name}')
     t = conn.get_type(name)
@@ -252,12 +262,9 @@ def get_item(item_id):
     if not item:
         raise err.NotFound()
 
-    properties = conn.get_item_properties(item)
+    item.properties = conn.get_item_properties(item)
 
-    return { 'item_id': item_id,
-             'item_type': item.item_type,
-             'properties': properties,
-    }
+    return { 'data': item }
 
     # Errors are converted to appropriate HTTP errors
     # raise errors.Forbidden()

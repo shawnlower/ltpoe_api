@@ -117,6 +117,7 @@ class SqliteDatastore:
                     else:
                         log.warning((f"TODO: Not filtering for "
                                      f"{prop}={_filter_props[prop]}"))
+                item.properties = self.get_item_properties(item)
                 items.append(item)
 
         return items, False
@@ -144,16 +145,40 @@ class SqliteDatastore:
         """
         property_map = {}
 
+        item_uri = self._local_to_uriref(item.item_id)
+
         property_dict = dict(self._graph.predicate_objects(
-            self._local_to_uriref(item.item_id)))
+            item_uri))
+
+        ###
+        # get the property object
+        property_list = []
+        for prop_uri in property_dict:
+            try:
+                prop = self._get_property(prop_uri)
+                print("Got property", item, item.item_id)
+                propValue = list(self._graph[item_uri:prop_uri])
+                if len(propValue) == 0:
+                    propValue = None
+                elif len(propValue) > 1:
+                    print("WARNING: Property length of {} for {}".format(
+                        len(propValue), str(propValue)))
+                prop.value = propValue[0]
+                property_list.append(prop)
+            except Exception as e:
+                print("Couldn't lookup", prop_uri)
+                print(e)
+
+        return property_list
+        ###
 
         # Get first of RDFS.label or LTP.name
-        name_prop = next(i for i in property_dict
-                         if i in [RDFS.label, self.namespace.name])
-        property_map['name'] = str(property_dict[name_prop])
+        # name_prop = next(i for i in property_dict
+        #                  if i in [RDFS.label, self.namespace.name])
+        # property_map['name'] = str(property_dict[name_prop])
 
-        property_map['created'] = str(property_dict[self.namespace.created])
-        return property_map
+        # property_map['created'] = str(property_dict[self.namespace.created])
+        # return property_map
 
     def _get_property(self, property_uri: "URIRef") -> LtpProperty:
         """
