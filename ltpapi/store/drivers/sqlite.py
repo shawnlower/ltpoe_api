@@ -382,15 +382,20 @@ class SqliteDatastore:
         """
         Return a list of URIs which are valid for a given type
         """
-        properties = []
+        properties = {}
         # Get a list of all parent types
         trans_uris = list(self._graph.transitive_objects(type_uri, RDFS.subClassOf))
         for uri in trans_uris:
             domain_uris = list(self._graph[:RDFS.domain:uri])
             for domain_uri in domain_uris:
-                properties.append(self._get_property(domain_uri))
+                prop = self._get_property(domain_uri)
+                if prop.property_id in properties:
+                    p = properties[prop.property_id]
+                    log.warn("Duplicate property key detected for {} ".format(
+                            prop.property_id))
+                properties[prop.property_id] = prop
 
-        return properties
+        return properties.values()
 
     def get_type(self, name):
         return self._get_type(self.namespace.term(name))
