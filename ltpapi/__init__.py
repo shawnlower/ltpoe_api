@@ -25,6 +25,19 @@ rebar = Rebar()
 registry = rebar.create_handler_registry(prefix='/api/v1')
 
 @registry.handles(
+    rule='/config',
+    method='GET',
+    marshal_schema=GetConfigResponseSchema(),
+)
+def get_config():
+    """
+    Get a list of types from the DB
+    """
+    conn = get_connection(current_app)
+    ns = conn.get_namespace()
+    return { 'namespace': ns }, 200
+
+@registry.handles(
     rule='/types/',
     method='GET',
     query_string_schema=GetTypesQueryStringSchema(),

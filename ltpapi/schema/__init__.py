@@ -84,6 +84,12 @@ class PatchItemResponseSchema(Schema):
     item = fields.Nested(ItemSchema)
     errors = fields.String(many = True)
 
+class GetConfigResponseSchema(Schema):
+    """
+    Response for a config request
+    """
+    namespace = fields.String()
+
 class GetMappingsResponseSchema(Schema):
     """
     Response for a 'mapping'

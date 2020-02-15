@@ -161,8 +161,8 @@ class SqliteDatastore:
         for prop_uri in property_dict:
             try:
                 prop = self._get_property(prop_uri)
-                print("Got property", item, item.item_id)
                 propValue = list(self._graph[item_uri:prop_uri])
+                print("Got property", item.item_id, prop.name, propValue)
                 if len(propValue) == 0:
                     propValue = None
                 elif len(propValue) > 1:
@@ -184,6 +184,12 @@ class SqliteDatastore:
 
         # property_map['created'] = str(property_dict[self.namespace.created])
         # return property_map
+
+    def get_namespace(self):
+        """
+        Return the current namespace
+        """
+        return self.namespace
 
     def _get_property(self, property_uri: "URIRef") -> LtpProperty:
         """
