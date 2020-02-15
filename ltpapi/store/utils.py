@@ -20,7 +20,9 @@ def normalize_type_id(name: str):
 
 def normalize_item_id(name: str):
     name = name.lower().replace(' ', '-')
-    name = ''.join([c for c in name if c in ['.', '-'] + list(string.ascii_letters)])
+    name = ''.join([c for c in name if c in ['.', '-'] + \
+            list(string.ascii_letters) + \
+            list(string.digits)])
     name=name.lstrip('.').rstrip('.')
     return name
 
