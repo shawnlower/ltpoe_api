@@ -1,5 +1,13 @@
 from flask_rebar.errors import *
 
+class InvalidItemError(ValueError):
+    def __init__(self, msg=None):
+        if not msg:
+            self.msg = "Invalid item"
+        else:
+            self.msg = msg
+        super(InvalidItemError, self).__init__(self.msg)
+
 class InvalidPropertyError(ValueError):
     def __init__(self, msg=None):
         if not msg:

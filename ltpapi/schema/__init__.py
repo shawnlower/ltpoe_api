@@ -65,6 +65,7 @@ class CreateTypeSchema(Schema):
 
 class CreateItemResponseSchema(Schema):
     item = fields.Nested(ItemSchema)
+    errors = fields.String(many = True)
 
 class GetMappingsResponseSchema(Schema):
     """

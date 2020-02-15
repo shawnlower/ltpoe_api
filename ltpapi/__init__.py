@@ -236,17 +236,27 @@ def create_property():
     method='POST',
     request_body_schema=CreateItemSchema(),
     marshal_schema={
-       201: CreateItemResponseSchema()
+       201: CreateItemResponseSchema(),
+       400: CreateItemResponseSchema(),
+       500: CreateItemResponseSchema(),
    }
 )
 def create_item():
     body = rebar.validated_body
     conn = get_connection(current_app)
 
+    name = body['name']
+    item_type = body['item_type']
+    properties = body['properties']
+
     try:
-        item = conn.create_item(body.pop('name'), body['item_type'])
+        print('create_item with', name, item_type, properties)
+        item = conn.create_item(name, item_type, properties)
+    except err.InvalidItemError as e:
+        return {'errors': [str(e)], 'item': {}}, 400
     except Exception as e:
-        raise err.InternalError(str(e))
+        print(e)
+        return {'errors': 'Server Error'}, 500
 
     return {'item': item}, 201
 

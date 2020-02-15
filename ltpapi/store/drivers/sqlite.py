@@ -430,29 +430,28 @@ class SqliteDatastore:
     def _local_to_uri(self, localname):
         return self.config['prefix'] + localname
 
-    def create_item(self, name: str, item_type: str, properties={}) -> LtpType:
+    def create_item(self, name: str, item_type: str, properties=[]) -> LtpType:
         """
         Create a new item
 
         @param name: A printable label for the item
         @param item_type: The id of the type of item to create
-        @param properties: A dict of additional {property_id: value} to set
+        @param properties: A list of PropertyValue {name: .., value: .., datatype}
         """
 
         ns = self.namespace
 
-        if 'name' in properties and properties['name'] != name:
-            raise Exception("Invalid request. name passed multiple times")
+        # Ensure we didn't pass name in properties
+        for prop in properties:
+            if prop['name'] == 'name':
+                raise InvalidItemError("Invalid request. name passed multiple times")
 
         if not self.get_type(item_type):
-            raise Exception(f"Invalid type: {item_type}")
-
-        # name is actually just another property
-        properties['name'] = name
+            raise InvalidItemError(f"Invalid type: {item_type}")
 
         # Ensure all passed properties are valid
         invalid_props = [ prop for prop in properties if not
-                          self.get_property(prop)]
+                          self.get_property(prop['name'])]
 
         if invalid_props:
             raise InvalidPropertyError(
@@ -461,19 +460,26 @@ class SqliteDatastore:
         ns = self.namespace
 
         norm_name = normalize_item_id(name)
-        item_uri = self._reserve_iri(self.config['prefix'] + norm_name)
+        item_uri = self._reserve_iri(self.config['prefix'] + norm_name, 10)
 
         if not item_uri:
-            return None
+            raise Exception(f"Unable to generate IRI for name: {norm_name} ({name})")
+
+        # Add the name
+        name_prop = self.get_property('name')
+        name_prop.value = name
+        properties += [name_prop]
 
         # Add the type
         type_uri = URIRef(self.get_type(item_type).get_uri())
         self._graph.add((item_uri, RDF.type, type_uri))
         self._graph.add((item_uri, RDFS.label, Literal(name)))
 
-        for prop_id in properties:
-            prop_uri = URIRef(self.get_property(prop_id).get_uri())
-            _value = properties[prop_id]
+        for prop in properties:
+            prop_uri = URIRef(self.get_property(prop.property_id).get_uri())
+            _value = prop.value
+            if not _value:
+                raise InvalidPropertyError
             if type(_value) == URIRef or re.match('^https?://', _value):
                 value = _value
             else:
