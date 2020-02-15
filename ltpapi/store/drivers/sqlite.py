@@ -67,11 +67,11 @@ class SqliteDatastore:
         """
         Load data into the store
         """
-        self._graph.parse(filename)
+        self._graph.parse(filename, format='ttl')
         self._graph.commit()
 
-    def get_items(self, item_type_id: str = None, max_results=25, offset=0,
-                  filter_props={}):
+    def get_items(self, item_type_id: str = None, max_results=500, offset=0,
+                  filter_props={}, query=None):
         """
         Return a list of items from the store
 
@@ -118,7 +118,12 @@ class SqliteDatastore:
                         log.warning((f"TODO: Not filtering for "
                                      f"{prop}={_filter_props[prop]}"))
                 item.properties = self.get_item_properties(item)
-                items.append(item)
+
+                # Basic query/filtering
+                if query and query.lower() not in str(item.name).lower():
+                    pass
+                else:
+                    items.append(item)
 
         return items, False
 

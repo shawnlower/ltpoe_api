@@ -14,7 +14,7 @@ class MappingSchema(Schema):
 class PropertyValueSchema(Schema):
     id = fields.String()
     name = fields.String()
-    description = fields.String()
+    # description = fields.String()
     value = fields.String()
     data_type = fields.String()
 
@@ -53,6 +53,7 @@ class CreatePropertySchema(Schema):
 class CreateItemSchema(Schema):
     name = fields.String(required=True)
     item_type = fields.String(required=True)
+    properties = fields.Nested(PropertyValueSchema, many=True, required=False)
 
 class CreateTypeSchema(Schema):
     name = fields.String()
@@ -112,6 +113,8 @@ class GetItemsQueryStringSchema(Schema):
     max_results = fields.Integer(required=False)
     all_properties = fields.Boolean(required=False)
     offset = fields.Integer(required=False)
+    item_type_id = fields.String(required=False)
+    query = fields.String(required=False)
 
 class GetTypesQueryStringSchema(Schema):
     max_results = fields.Integer(required=False)
@@ -121,7 +124,6 @@ class GetTypesQueryStringSchema(Schema):
 
 # Get a SINGLE item
 class GetItemQueryStringSchema(Schema):
-    item_type_id = fields.String(required=True)
     all_properties = fields.Boolean(required=False)
 
 # Get a SINGLE type

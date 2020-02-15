@@ -51,7 +51,6 @@ def get_types():
     else:
         types = base_types
 
-    current_app.logger.debug(types)
     return { 'data': types, 'more': more, 'results': len(types) }
 
     # Errors are converted to appropriate HTTP errors
@@ -71,7 +70,8 @@ def get_items():
     conn = get_connection(current_app)
     args = rebar.validated_args
     all_properties = args.get('all_properties', True)
-    max_results = args.get('max_results', 25)
+    max_results = args.get('max_results', 500)
+    query = args.get('query')
     offset = args.get('offset', 0)
     item_type_id = args.get('item_type_id')
 
@@ -80,7 +80,11 @@ def get_items():
     filter_props = { k: request.args.get(k) for k in request.args.keys()
         if not k in args.keys()}
 
-    (items, more) = conn.get_items(item_type_id, filter_props=filter_props)
+    (items, more) = conn.get_items(
+            item_type_id,
+            filter_props=filter_props,
+            query = query,
+        )
     current_app.logger.debug(
         f'get_items got {len(items)} items from store: \n' \
         + '\n - '.join([str(i) for i in  items]))
@@ -250,6 +254,7 @@ def create_item():
         rule='/items/<item_id>',
         method='GET',
         marshal_schema=GetItemResponseSchema(),
+        query_string_schema=GetItemQueryStringSchema(),
 )
 def get_item(item_id):
     """
