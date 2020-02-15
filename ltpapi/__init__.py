@@ -1,6 +1,7 @@
 from datetime import timedelta
 from functools import update_wrapper
 import os
+import traceback
 from urllib.parse import unquote
 
 from flask import Flask, current_app, make_response, request, current_app, g
@@ -309,13 +310,95 @@ def delete_item(item_id):
         conn.delete_item(item_id)
     except Exception as e:
         current_app.logger.error(e)
-        return { "errors": [ "Unable to delete item" ]}, 400
+        return { "errors": [ "Unable to delete item" ]}, 500
 
 
     return { "errors": []}, 200
 
-    # Errors are converted to appropriate HTTP errors
-    # raise errors.Forbidden()
+@registry.handles(
+        rule='/items/<item_id>',
+        method='PATCH',
+        request_body_schema=PatchItemSchema(),
+        marshal_schema={
+            200: PatchItemResponseSchema(),
+            400: PatchItemResponseSchema(),
+            404: PatchItemResponseSchema(),
+            500: PatchItemResponseSchema(),
+        }
+)
+def update_item(item_id):
+    """
+    Update an item, given a set of changes
+
+    # Examples:
+
+    Add a property to an existing item:
+    [ { op: "ADD", property: "relatedTo", value: "..." } ]
+
+    Change a property
+    [ { op: "REPLACE", property: "name", value: "New Name" } ]
+
+    Remove a single property
+    [ { op: "DELETE", property: "age", value: "27" } ]
+
+    Remove ALL properties by name
+    [ { op: "DELETE", property: "relatedTo" } ]
+
+    # Invalid operations
+
+    ## Adding or removing the name of an item (cardinality exactly 1)
+    [ { op: "ADD", property: "name" } ]
+    [ { op: "DELETE", property: "name" } ]
+
+    """
+
+    changes = rebar.validated_body['changes']
+
+
+    item = None
+    try:
+        conn = get_connection(current_app)
+        item = conn.get_item(item_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return { "errors": [ "Unable to update item" ]}, 500
+
+    if not item:
+        raise err.NotFound()
+
+    ## Process additions
+    for change in changes:
+        try:
+            op = change['op'].strip().lower() 
+            if op == 'add':
+                prop = conn.get_property(change['property_id'])
+                if not prop:
+                    raise err.InvalidPropertyError(f"Invalid Property: {prop}")
+                prop.value = change['value']
+                    
+                conn.add_property_to_item(item, prop)
+            elif op == 'replace':
+                pass
+            elif op == 'delete':
+                prop = conn.get_property(change['property_id'])
+                invalid_deletion = ['name', 'created', 'type']
+                if prop.property_id in invalid_deletion or not prop: 
+                    raise err.InvalidPropertyError(f"Invalid Property: {prop}")
+                prop.value = change['value']
+                # Only pass value if truthy
+                conn.delete_property_from_item(item, prop)
+
+        except err.InvalidPropertyError as e:
+            return { "errors": [str(e)] }, 400
+        except Exception as e:
+            current_app.logger.error(traceback.format_exc())
+            return { "errors": [ "Server Error" ] }, 500
+
+
+
+    # conn.delete_item(item_id)
+    return { "errors": []}, 200
+
 
 if __name__ == '__main__':
     print('Running...')

@@ -1,4 +1,4 @@
-from marshmallow import fields, Schema
+from marshmallow import fields, Schema, validate
 
 class MappingSchema(Schema):
     # e.g. schema.org/
@@ -59,15 +59,28 @@ class CreateTypeSchema(Schema):
     name = fields.String()
     description = fields.String(required=False)
 
+class ChangeSchema(Schema):
+    op = fields.String(required=True,
+            validate=validate.OneOf(["add", "replace", "delete"]))
+    property_id = fields.String(required=True)
+    value = fields.String(required=True)
+
+class PatchItemSchema(Schema):
+    changes = fields.Nested(ChangeSchema, many=True, required=True)
+
 ##############################################################################
 # Outgoing response schemas
 ##############################################################################
 
 class CreateItemResponseSchema(Schema):
     item = fields.Nested(ItemSchema)
-    errors = fields.String(many = True)
+    errors = fields.String(many=True)
 
 class DeleteItemResponseSchema(Schema):
+    item = fields.Nested(ItemSchema)
+    errors = fields.String(many = True)
+
+class PatchItemResponseSchema(Schema):
     item = fields.Nested(ItemSchema)
     errors = fields.String(many = True)
 

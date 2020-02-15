@@ -247,6 +247,53 @@ class SqliteDatastore:
     def _uri_to_local(self, uri):
         return uri.partition(self.config['prefix'])[2]
 
+    def _add_property_to_item(self, item, prop) -> LtpItem:
+        print("Adding property:::::", item, prop, prop.value)
+        item_uri = item.get_uri()
+        prop_uri = prop.get_uri()
+        value = str(prop.value)
+
+        if not item_uri and prop_uri and value:
+            raise err.InvalidPropertyError()
+
+        # We should perform some validation on the value here
+        if type(value) == URIRef or re.match('^https?://', value):
+            _value = URIRef(value)
+        else:
+            _value = Literal(value)
+
+        self._graph.add((item_uri, prop_uri, _value))
+        self._graph.commit()
+
+    def add_property_to_item(self, item, prop) -> LtpItem:
+        return self._add_property_to_item(item, prop)
+
+    def _delete_property_from_item(self, item, prop, value=None) -> LtpItem:
+        print("Deleting property:::::", item, prop, prop.value)
+        item_uri = item.get_uri()
+        prop_uri = prop.get_uri()
+
+        value = None
+        if prop.value:
+            value = prop.value
+
+        if not item_uri and prop_uri and value:
+            raise err.InvalidPropertyError()
+
+        # We should perform some validation on the value here
+        if type(value) == type(None):
+            _value = None
+        elif type(value) == URIRef or re.match('^https?://', value):
+            _value = URIRef(value)
+        else:
+            _value = Literal(value)
+
+        self._graph.remove((item_uri, prop_uri, _value))
+        self._graph.commit()
+
+    def delete_property_from_item(self, item, prop) -> LtpItem:
+        return self._delete_property_from_item(item, prop)
+
     def get_property(self, property_id: str) -> LtpProperty:
         """
         Return a single property from the store
