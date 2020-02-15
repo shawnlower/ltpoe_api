@@ -67,6 +67,10 @@ class CreateItemResponseSchema(Schema):
     item = fields.Nested(ItemSchema)
     errors = fields.String(many = True)
 
+class DeleteItemResponseSchema(Schema):
+    item = fields.Nested(ItemSchema)
+    errors = fields.String(many = True)
+
 class GetMappingsResponseSchema(Schema):
     """
     Response for a 'mapping'

@@ -430,6 +430,27 @@ class SqliteDatastore:
     def _local_to_uri(self, localname):
         return self.config['prefix'] + localname
 
+    def _delete_item(self, item_id):
+        """
+        Delete an item, removing the URI and any properties.
+
+        @param item_id: The ID of the item to delete
+        """
+        ns = self.namespace
+
+        uri = self.namespace[item_id]
+        print(f"Deleting: {uri}")
+        self._graph.remove((uri, None, None))
+        self._graph.commit()
+
+    def delete_item(self, item_id: str):
+        """
+        Delete an item, removing the URI and any properties.
+
+        @param item_id: The ID of the item to delete
+        """
+        return self._delete_item(item_id)
+
     def create_item(self, name: str, item_type: str, properties=[]) -> LtpType:
         """
         Create a new item
@@ -513,6 +534,7 @@ class SqliteDatastore:
                 name=properties[RDFS.label],
                 created=properties[ns.created],
                 item_type=item_type,
+                namespace=ns,
             )
         except KeyError as e:
             log.warning("Invalid item in DB: item={}. Error: {}".format(

@@ -284,6 +284,39 @@ def get_item(item_id):
     # Errors are converted to appropriate HTTP errors
     # raise errors.Forbidden()
 
+@registry.handles(
+        rule='/items/<item_id>',
+        method='DELETE',
+        marshal_schema={
+            200: DeleteItemResponseSchema(),
+            400: DeleteItemResponseSchema(),
+            404: DeleteItemResponseSchema(),
+            500: DeleteItemResponseSchema(),
+        }
+)
+def delete_item(item_id):
+    """
+    Delete a single Item from the DB
+    """
+
+    try:
+        conn = get_connection(current_app)
+        item = conn.get_item(item_id)
+
+        if not item:
+            raise err.NotFound()
+
+        conn.delete_item(item_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return { "errors": [ "Unable to delete item" ]}, 400
+
+
+    return { "errors": []}, 200
+
+    # Errors are converted to appropriate HTTP errors
+    # raise errors.Forbidden()
+
 if __name__ == '__main__':
     print('Running...')
     app = create_app()

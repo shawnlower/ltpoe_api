@@ -7,6 +7,7 @@ class LtpItem:
     item_id: str = ""
     created: str = ""
     properties = []
+    namespace = None
 
     def __init__(self, name, item_type, item_id=None, created=None, 
                  namespace=None):
@@ -14,6 +15,10 @@ class LtpItem:
         self.item_id = item_id
         self.item_type = item_type
         self.created = created
+        self.namespace = namespace
+
+    def get_uri(self):
+        return self.namespace.term(self.item_id)
 
 
 class LtpType:
