@@ -146,6 +146,10 @@ class GetTypesQueryStringSchema(Schema):
     parent = fields.String(required=False)
     all_properties = fields.Boolean(required=False)
 
+class RetypeItemQueryStringSchema(Schema):
+    new_type_id = fields.String(required=True)
+    split_on_incompatible = fields.Boolean(default=False, required=False)
+
 # Get a SINGLE item
 class GetItemQueryStringSchema(Schema):
     all_properties = fields.Boolean(required=False)

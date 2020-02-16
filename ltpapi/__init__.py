@@ -329,6 +329,53 @@ def delete_item(item_id):
     return { "errors": []}, 200
 
 @registry.handles(
+        rule='/retype/<item_id>',
+        method='PUT',
+        query_string_schema=RetypeItemQueryStringSchema(),
+        marshal_schema={
+            200: PatchItemResponseSchema(),
+            400: PatchItemResponseSchema(),
+            404: PatchItemResponseSchema(),
+            500: PatchItemResponseSchema(),
+        }
+)
+def retype_item(item_id):
+    """
+    Change the type of an item, e.g. from 'Thing' -> 'Person'
+
+    @param new_type_id: The ID of the new type that the new item should become
+    @param split_on_incompatible: When converting between sibling types where
+        existing properties are not applicable, we can create a new item,
+        preserving the existing item and any properties specific to its type.
+        An additional 'relatedTo' property will be used to link the two.
+
+    @return: The item ID(s) of the item(s). When not splitting, the item ID will
+            *not* change.
+    """
+    args = rebar.validated_args
+    new_type_id = args.get('new_type_id')
+    split_on_incompatible = args.get('split_on_incompatible')
+    if split_on_incompatible:
+        return {errors: ['Splitting not implemented']}, 400
+
+    conn = get_connection(current_app)
+
+    item = conn.get_item(item_id)
+    if not item:
+        return {'errors': ["Item not found"]}, 404
+
+    new_item_type = conn.get_type(new_type_id)
+    if not new_item_type:
+        return {'errors': ["New item type not found"]}, 404
+
+    try:
+        conn.retype_item(item, new_item_type)
+    except Exception as e:
+        traceback.print_exc()
+        return {'errors': ['Failed to retype item']}, 500
+
+
+@registry.handles(
         rule='/items/<item_id>',
         method='PATCH',
         request_body_schema=PatchItemSchema(),
@@ -346,16 +393,16 @@ def update_item(item_id):
     # Examples:
 
     Add a property to an existing item:
-    [ { op: "ADD", property: "relatedTo", value: "..." } ]
+    [ { op: "ADD", property_id: "relatedTo", value: "..." } ]
 
     Change a property
-    [ { op: "REPLACE", property: "name", value: "New Name" } ]
+    [ { op: "REPLACE", property_id: "name", value: "New Name" } ]
 
     Remove a single property
-    [ { op: "DELETE", property: "age", value: "27" } ]
+    [ { op: "DELETE", property_id: "age", value: "27" } ]
 
     Remove ALL properties by name
-    [ { op: "DELETE", property: "relatedTo" } ]
+    [ { op: "DELETE", property_id: "relatedTo" } ]
 
     # Invalid operations
 
@@ -391,6 +438,9 @@ def update_item(item_id):
                     
                 conn.add_property_to_item(item, prop)
             elif op == 'replace':
+                # prop = conn.get_property(change['property_id'])
+                # prop.value = change['value']
+                # import pdb; pdb.set_trace()
                 pass
             elif op == 'delete':
                 prop = conn.get_property(change['property_id'])

@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import os
 import re
@@ -219,6 +220,10 @@ class SqliteDatastore:
                 prop_range.append('string')
             elif range_item == XSD.date:
                 prop_range.append('date')
+            elif range_item == XSD.integer:
+                prop_range.append('number')
+            elif range_item == XSD.dateTime:
+                prop_range.append('datetime')
             else:
                 log.warning(f"Ignoring out-of-namespace range item {range_item}")
 
@@ -329,7 +334,9 @@ class SqliteDatastore:
             # A unique ID to prevent collisions
             # A timestamp to allow async cleanup
             lock_id = URIRef(uuid.uuid4().urn)
-            lock_ts = Literal(time.time_ns())
+            lock_ts = Literal(
+                    datetime.utcnow().isoformat(' '),
+                    datatype=XSD.dateTime)
             created = self._local_to_uriref('created')
             self._graph.add((uriref, created, lock_ts))
 
@@ -547,7 +554,7 @@ class SqliteDatastore:
         # Add the type
         type_uri = URIRef(self.get_type(item_type).get_uri())
         self._graph.add((item_uri, RDF.type, type_uri))
-        self._graph.add((item_uri, RDFS.label, Literal(name)))
+        self._graph.add((item_uri, RDFS.label, Literal(name, datatype=XSD.string)))
 
         for prop in properties:
             prop_uri = URIRef(self.get_property(prop.property_id).get_uri())
@@ -597,4 +604,41 @@ class SqliteDatastore:
             return None
 
         return item
+
+    def retype_item(self, item: "LtpItem", new_type: "LtpType"):
+        """
+        Change the type of an item
+
+        @param: item: An LtpItem to be retyped
+        @param: new_type: The LtpType desired for the item
+
+        @return: None
+        """
+
+        existing_props = [p.name for p in self.get_properties_for_type(item.item_type,
+            recursive=True)]
+        new_props = [p.name for p in self.get_properties_for_type(new_type.name,
+            recursive=True)]
+
+
+        incompatible_props = [p for p in existing_props if not p in new_props]
+        if incompatible_props:
+            types_string = ", ".join(incompatible_props)
+            err = 'Incompatible types. Types not present on the new type: '+\
+                  types_string
+            return {errors: [err]}, 400
+
+        diff2 = [p for p in new_props if not p in existing_props ]
+
+        log.info(f"Retyping '{item.item_id}' from {item.item_type} to "+\
+                f"{new_type.type_id}. {len(diff2)} additional props in new type.")
+
+        item_uri = item.get_uri()
+        new_type_uri = new_type.get_uri()
+        type_triple = self._graph[item_uri:RDF.type:]
+        if type_triple and new_type_uri:
+            self._graph.set((item_uri, RDF.type, new_type_uri))
+            self._graph.commit()
+        else:
+            raise Exception("Unable to retrieve type data")
 
