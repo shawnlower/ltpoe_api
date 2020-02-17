@@ -476,6 +476,7 @@
                 "sha256:d7cc528d76e76342423ca640335bd3633420dc1366f258cb31d05e865ef5ca1f"
             ],
             "index": "pypi",
+            "markers": "os_name != 'nt'",
             "version": "==0.6.0"
         },
         "py": {
