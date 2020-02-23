@@ -443,11 +443,16 @@ class Datastore:
     def get_type(self, name):
         return self._get_type(self.namespace.term(name))
 
-    def get_types(self, root):
+    def get_types(self, root=OWL.Thing):
         if root:
-            type_uris = list(self._get_types(self.namespace.term(root)))
+            types = list(self._get_types(self.namespace.term(root)))
         else:
-            type_uris = list(self._get_types())
+            types = list(self._get_types())
+
+        return (types, False)
+
+    def _get_types(self, root):
+        type_uris = self._graph.transitive_subjects(RDFS.subClassOf, root)
 
         types = []
         for type_uri in type_uris:
@@ -456,11 +461,7 @@ class Datastore:
             except NotFoundError:
                 pass
 
-        return (types, False)
-
-    def _get_types(self, root=OWL.Thing):
-        t = self._graph.transitive_subjects(RDFS.subClassOf, root)
-        return t
+        return types
 
     def _local_to_uriref(self, localname):
         return URIRef(self._local_to_uri(localname))
