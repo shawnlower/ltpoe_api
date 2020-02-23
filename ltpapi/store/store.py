@@ -176,8 +176,10 @@ class Datastore:
         assert type(property_uri) == URIRef
 
         # Ensure property exists
-        if not next((i for i in self._graph[property_uri:RDF.type:]
-            if  i in [OWL.DatatypeProperty, OWL.ObjectProperty]), None):
+        property_types = (i for i in self._graph[property_uri:RDF.type:]
+            if  i in [OWL.DatatypeProperty, OWL.ObjectProperty])
+
+        if not next(property_types, None):
             raise InvalidPropertyError(f'Property does not exist: {property_uri}')
 
         label = str(self._get_label(property_uri) or "")
@@ -375,15 +377,18 @@ class Datastore:
         Returns an LtpType object.
         """
 
-        owl_t = (type_uri, RDF.type, OWL.Class)
-        rdfs_t = (type_uri, RDF.type, RDFS.Class)
-        if not owl_t in self._graph or rdfs_t in self._graph:
+        rdf_type = next(self._graph[type_uri:RDF.type], None)
+        if not rdf_type:
             raise NotFoundError(f"Type not found: {type_uri}")
 
+        if not rdf_type in [OWL.Class, RDFS.Class]:
+            log.error("Invalid Type: {}".format(rdf_type))
+            raise InvalidTypeError(f"Invalid type for {type_uri}")
+
         name = next(self._graph[type_uri:RDFS.label], None)
+
         if not name:
-            #raise InvalidTypeError(f'Incomplete type for {type_uri}')
-            pass
+            raise InvalidTypeError(f'Incomplete type for {type_uri}')
 
         description = next(self._graph[type_uri:RDFS.comment], "<no description>")
 
