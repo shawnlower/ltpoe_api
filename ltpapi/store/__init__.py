@@ -27,7 +27,7 @@ def get_connection(app):
 
     store_type = store_config.get('type').lower()
 
-    if store_type == 'sparqldatastore':
+    if store_type == 'sparql':
         conn = SparqlDatastore(store_config)
     elif store_type == 'sqlite':
         conn = SqliteDatastore(store_config)
@@ -45,3 +45,4 @@ def init_db(app):
 
     cmds = [v for v in commands.__dict__.values() if type(v) == click.Command]
     [app.cli.add_command(cmd) for cmd in cmds]
+
