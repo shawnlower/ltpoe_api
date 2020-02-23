@@ -29,12 +29,13 @@ class LtpType:
     properties = []
 
     def __init__(self, name, description, namespace, created=None,
-                 type_id=None):
+                 type_id=None, properties=[]):
         self.name = name
         self.namespace = namespace
         self.description = description
         self.type_id = type_id
         self.created = created
+        self.properties = properties
 
     def get_uri(self):
         return self.namespace.term(self.type_id)

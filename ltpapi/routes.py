@@ -47,14 +47,14 @@ def get_routes(registry, rebar):
 
         parent =  args.get('parent', None)
 
-        (base_types, more) = conn.get_types(parent)
-        types = []
-        if all_properties:
-            for t in base_types:
-                t.properties = conn.get_properties_for_type(t.type_id, args.get('all_properties'))
-                types.append(t)
-        else:
-            types = base_types
+        (types, more) = conn.get_types(parent, all_properties=all_properties)
+        # types = []
+        #if all_properties:
+        #    for t in base_types:
+        #        t.properties = conn.get_properties_for_type(t.type_id, args.get('all_properties'))
+        #        types.append(t)
+        #else:
+        #    types = base_types
 
         return { 'data': types, 'more': more, 'results': len(types) }
 

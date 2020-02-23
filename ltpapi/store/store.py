@@ -185,23 +185,10 @@ class Datastore:
         label = str(self._get_label(property_uri) or "")
         desc = str(self._get_description(property_uri) or "")
 
-        # Get range and domain
-        prop_range = []
-        for range_item in self._graph.objects(property_uri, RDFS.range):
-            range_id = range_item.partition(self.namespace)[2]
-            if range_id:
-                prop_range.append(range_id)
-            elif range_item == XSD.string:
-                prop_range.append('string')
-            elif range_item == XSD.date:
-                prop_range.append('date')
-            elif range_item == XSD.integer:
-                prop_range.append('number')
-            elif range_item == XSD.dateTime:
-                prop_range.append('datetime')
-            else:
-                log.warning(f"Ignoring out-of-namespace range item {range_item}")
+        range_items = list(self._graph.objects(property_uri, RDFS.range))
+        prop_range = [self._get_range(uri) for uri in range_items]
 
+        # ***
         prop_domain = []
         for domain_item in self._graph.objects(property_uri, RDFS.domain):
             domain_id = domain_item.partition(self.namespace)[2]
@@ -215,6 +202,28 @@ class Datastore:
         prop.property_id = property_uri.partition(self.namespace)[2]
 
         return prop
+
+    def _get_range(self, range_uri: str) -> List[str]:
+        """
+        Return a range e.g. 'string', 'datetime' for a given URI
+        param: range_uri: str
+        """
+
+        range_id = range_uri.partition(self.namespace)[2]
+        if range_id:
+            return(range_id)
+        elif range_uri == XSD.string:
+            return('string')
+        elif range_uri == XSD.date:
+            return('date')
+        elif range_uri == XSD.integer:
+            return('number')
+        elif range_uri == XSD.dateTime:
+            return('datetime')
+        else:
+            log.warning(f"Ignoring out-of-namespace range item {range_uri}")
+            return(None)
+
 
     def _get_description(self, uri):
         values = list(self._graph[uri:RDFS.comment])
@@ -418,10 +427,11 @@ class Datastore:
 
         return properties
 
-    def get_properties_for_type(self, type_id, recursive=True):
-        return self._get_properties_for_type(self.namespace.term(type_id))
+    def get_properties_for_type(self, type_id, all_properties=False):
+        return self._get_properties_for_type(self.namespace.term(type_id),
+                all_properties)
 
-    def _get_properties_for_type(self, type_uri) -> List[URIRef]:
+    def _get_properties_for_type(self, type_uri, all_properties=False) -> List[URIRef]:
         """
         Return a list of URIs which are valid for a given type
         """
@@ -443,21 +453,24 @@ class Datastore:
     def get_type(self, name):
         return self._get_type(self.namespace.term(name))
 
-    def get_types(self, root=OWL.Thing):
+    def get_types(self, root=OWL.Thing, all_properties=False):
         if root:
-            types = list(self._get_types(self.namespace.term(root)))
+            types = list(self._get_types(self.namespace.term(root),
+                all_properties=all_properties))
         else:
-            types = list(self._get_types())
+            types = list(self._get_types(all_properties=all_properties))
 
         return (types, False)
 
-    def _get_types(self, root):
+    def _get_types(self, root, all_properties=False):
         type_uris = self._graph.transitive_subjects(RDFS.subClassOf, root)
 
         types = []
         for type_uri in type_uris:
             try:
-                types.append(self._get_type(type_uri))
+                t = self._get_type(type_uri)
+                t.properties = self.get_properties_for_type(t.type_id)
+                types.append(t)
             except NotFoundError:
                 pass
 
