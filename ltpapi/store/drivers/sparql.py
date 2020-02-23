@@ -49,7 +49,6 @@ class SparqlDatastore(Datastore):
     @log_time
     def _get_types(self, root=OWL.Thing, all_properties=False):
         #rv = super()._get_types(root)
-        # import pdb; pdb.set_trace()
         #return rv
         sparql = """
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>

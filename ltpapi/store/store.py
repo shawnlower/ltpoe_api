@@ -68,7 +68,8 @@ class Datastore:
         item_types = self._get_types(item_type)
         subjects = []
         for item_type in item_types:
-            subjects += self._graph.subjects(RDF.type, item_type)
+            uri = item_type.get_uri()
+            subjects += self._graph.subjects(RDF.type, uri)
 
         items = []
         for entity in subjects:
