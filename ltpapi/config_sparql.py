@@ -1,5 +1,7 @@
 STORE_TYPE = 'sparql'
-STORE_URL = 'http://localhost:3030/ltp/query'
+STORE_URL = 'http://localhost:3030/ltp'
 STORE_PREFIX = 'http://shawnlower.net/o/'
+STORE_USERNAME = 'admin'
+STORE_PASSWORD = 'password'
 PREFIX = 'schema:'
 BASE = 'ltp:'
