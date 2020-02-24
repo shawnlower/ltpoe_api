@@ -32,9 +32,15 @@ class SparqlDatastore(Datastore):
         if 'url' not in config:
             raise InvalidConfigurationError("Missing 'STORE_URL' key in config")
 
-        self._graph = ConjunctiveGraph('SPARQLStore',
+        self._graph = ConjunctiveGraph('SPARQLUpdateStore',
                      identifier=config['prefix'])
-        self._graph.open(config['url'])
+        # self._graph.open((config['url'], config['url']))
+        query_ep = '{}/query'.format(config['url'])
+        update_ep = '{}/update'.format(config['url'])
+        self._graph.open((query_ep, update_ep))
+        username=config['username']
+        password=config['password']
+        self._graph.store.setCredentials(username, password)
 
         # Bind our namespace
         self.namespace = Namespace(self.config['prefix'])
