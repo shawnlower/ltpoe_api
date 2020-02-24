@@ -1,6 +1,7 @@
 from flask import Flask, current_app, make_response, request, current_app, g
 from flask_rebar import Rebar
 from marshmallow import fields, Schema
+import traceback
 
 # e.g. PropertySchema, TypeSchema, *RequestSchema, etc
 from .schema import *
