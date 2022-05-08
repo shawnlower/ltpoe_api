@@ -25,21 +25,22 @@ class SqliteDatastore(Datastore):
 
         do_create = self.config.get('create').lower() == 'true'
 
-        self._graph = ConjunctiveGraph('SQLite',
+        self._graph = ConjunctiveGraph('SQLAlchemy',
                                        identifier=config['prefix'])
 
         if 'file' not in config:
             raise InvalidConfigurationError("Missing 'STORE_FILE' key in config")
 
         db_file = config['file']
+        db_uri = "sqlite:///{}".format(db_file)
         if do_create and not os.path.exists(db_file) \
             or os.stat(db_file).st_size == 0:
                 log.info(f"Creating: {db_file}")
-                self._graph.open(db_file, create=True)
+                self._graph.open(db_uri, create=True)
                 self._graph.commit()
         else:
             log.info(f"Using existing DB: {db_file}")
-            self._graph.open(db_file, create=False)
+            self._graph.open(db_uri, create=False)
 
         # Bind our namespace
         self.namespace = Namespace(self.config['prefix'])

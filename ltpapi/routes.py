@@ -19,7 +19,7 @@ def get_routes(registry, rebar):
     @registry.handles(
         rule='/config',
         method='GET',
-        marshal_schema=GetConfigResponseSchema(),
+        response_body_schema=GetConfigResponseSchema(),
     )
     def get_config():
         """
@@ -33,7 +33,7 @@ def get_routes(registry, rebar):
         rule='/types/',
         method='GET',
         query_string_schema=GetTypesQueryStringSchema(),
-        marshal_schema=GetTypesResponseSchema(),
+        response_body_schema=GetTypesResponseSchema(),
     )
     def get_types():
         """
@@ -66,7 +66,7 @@ def get_routes(registry, rebar):
         rule='/items/',
         method='GET',
         query_string_schema=GetItemsQueryStringSchema(),
-        marshal_schema=GetItemsResponseSchema(),
+        response_body_schema=GetItemsResponseSchema(),
     )
     def get_items():
         """
@@ -99,7 +99,7 @@ def get_routes(registry, rebar):
     @registry.handles(
         rule='/properties/<property_id>',
         method='GET',
-        marshal_schema=GetPropertyResponseSchema(),
+        response_body_schema=GetPropertyResponseSchema(),
     )
     def get_property(property_id):
         """
@@ -117,7 +117,7 @@ def get_routes(registry, rebar):
         rule='/properties/',
         method='GET',
         query_string_schema=GetPropertiesQueryStringSchema(),
-        marshal_schema=GetPropertiesResponseSchema(),
+        response_body_schema=GetPropertiesResponseSchema(),
     )
     def get_properties():
         """
@@ -136,7 +136,7 @@ def get_routes(registry, rebar):
         rule='/types/<name>',
         method='GET',
         query_string_schema=GetTypeQueryStringSchema(),
-        marshal_schema=GetTypeResponseSchema(),
+        response_body_schema=GetTypeResponseSchema(),
     )
     def get_type(name):
         """
@@ -165,7 +165,7 @@ def get_routes(registry, rebar):
     @registry.handles(
         rule='/mappings/<resource>',
         method='GET',
-        marshal_schema = {
+        response_body_schema = {
             200: GetMappingsResponseSchema(),
         },
     )
@@ -198,7 +198,7 @@ def get_routes(registry, rebar):
         rule='/types',
         method='POST',
         request_body_schema=CreateTypeSchema(),
-        marshal_schema={
+        response_body_schema={
            201: TypeSchema()
        }
     )
@@ -218,7 +218,7 @@ def get_routes(registry, rebar):
         rule='/properties',
         method='POST',
         request_body_schema=CreatePropertySchema(),
-        marshal_schema={
+        response_body_schema={
            201: PropertySchema()
        }
     )
@@ -241,7 +241,7 @@ def get_routes(registry, rebar):
         rule='/items',
         method='POST',
         request_body_schema=CreateItemSchema(),
-        marshal_schema={
+        response_body_schema={
            201: CreateItemResponseSchema(),
            400: CreateItemResponseSchema(),
            500: CreateItemResponseSchema(),
@@ -269,7 +269,7 @@ def get_routes(registry, rebar):
     @registry.handles(
             rule='/items/<item_id>',
             method='GET',
-            marshal_schema=GetItemResponseSchema(),
+            response_body_schema=GetItemResponseSchema(),
             query_string_schema=GetItemQueryStringSchema(),
     )
     def get_item(item_id):
@@ -293,7 +293,7 @@ def get_routes(registry, rebar):
     @registry.handles(
             rule='/items/<item_id>',
             method='DELETE',
-            marshal_schema={
+            response_body_schema={
                 200: DeleteItemResponseSchema(),
                 400: DeleteItemResponseSchema(),
                 404: DeleteItemResponseSchema(),
@@ -324,7 +324,7 @@ def get_routes(registry, rebar):
             rule='/retype/<item_id>',
             method='PUT',
             query_string_schema=RetypeItemQueryStringSchema(),
-            marshal_schema={
+            response_body_schema={
                 200: PatchItemResponseSchema(),
                 400: PatchItemResponseSchema(),
                 404: PatchItemResponseSchema(),
@@ -372,7 +372,7 @@ def get_routes(registry, rebar):
             rule='/items/<item_id>',
             method='PATCH',
             request_body_schema=PatchItemSchema(),
-            marshal_schema={
+            response_body_schema={
                 200: PatchItemResponseSchema(),
                 400: PatchItemResponseSchema(),
                 404: PatchItemResponseSchema(),
