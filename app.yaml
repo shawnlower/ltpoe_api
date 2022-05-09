@@ -1,0 +1,7 @@
+runtime: python310
+entrypoint: gunicorn --bind 0.0.0.0:$PORT 'ltpapi:create_app()'
+
+instance_class: F2
+
+env_variables:
+  FLASK_ENV: development
